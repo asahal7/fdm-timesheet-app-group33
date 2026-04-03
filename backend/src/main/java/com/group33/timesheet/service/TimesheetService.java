@@ -1,6 +1,18 @@
 package com.group33.timesheet.service;
 
-import com.group33.timesheet.domain.*;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.group33.timesheet.domain.ApprovalDecision;
+import com.group33.timesheet.domain.AuditActionType;
+import com.group33.timesheet.domain.AuditLogEntry;
+import com.group33.timesheet.domain.DecisionType;
+import com.group33.timesheet.domain.Timesheet;
+import com.group33.timesheet.domain.TimesheetEntry;
+import com.group33.timesheet.domain.TimesheetStatus;
 import com.group33.timesheet.dto.AddTimesheetEntryRequest;
 import com.group33.timesheet.dto.ApprovalRequest;
 import com.group33.timesheet.dto.CreateTimesheetRequest;
@@ -9,11 +21,6 @@ import com.group33.timesheet.exception.ResourceNotFoundException;
 import com.group33.timesheet.repository.ApprovalDecisionRepository;
 import com.group33.timesheet.repository.AuditLogEntryRepository;
 import com.group33.timesheet.repository.TimesheetRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @Transactional
@@ -72,6 +79,10 @@ public class TimesheetService {
     public Timesheet addEntry(UUID timesheetId, AddTimesheetEntryRequest request) {
         Timesheet timesheet = getTimesheetById(timesheetId);
 
+        if (timesheet.getStatus() != TimesheetStatus.DRAFT) {
+            throw new BadRequestException("Entries can only be added while the timesheet is in DRAFT status.");
+        }
+
         TimesheetEntry entry = new TimesheetEntry(request.getDay(), request.getHours());
         if (!entry.isValid()) {
             throw new BadRequestException("Entry hours must be between 0 and 24.");
@@ -100,6 +111,15 @@ public class TimesheetService {
 
     public Timesheet submitTimesheet(UUID timesheetId) {
         Timesheet timesheet = getTimesheetById(timesheetId);
+
+        if (timesheet.getStatus() != TimesheetStatus.DRAFT) {
+            throw new BadRequestException("Only DRAFT timesheets can be submitted.");
+        }
+
+        if (timesheet.getEntries() == null || timesheet.getEntries().isEmpty()) {
+            throw new BadRequestException("Cannot submit a timesheet with no entries.");
+        }
+
         timesheet.submit();
 
         auditLogEntryRepository.save(
@@ -119,6 +139,10 @@ public class TimesheetService {
 
         if (!timesheet.getManagerId().equals(request.getManagerId())) {
             throw new BadRequestException("Only the assigned manager can approve this timesheet.");
+        }
+
+        if (timesheet.getStatus() != TimesheetStatus.PENDING_APPROVAL) {
+            throw new BadRequestException("Only PENDING_APPROVAL timesheets can be approved.");
         }
 
         timesheet.approve();
@@ -150,6 +174,10 @@ public class TimesheetService {
 
         if (!timesheet.getManagerId().equals(request.getManagerId())) {
             throw new BadRequestException("Only the assigned manager can reject this timesheet.");
+        }
+
+        if (timesheet.getStatus() != TimesheetStatus.PENDING_APPROVAL) {
+            throw new BadRequestException("Only PENDING_APPROVAL timesheets can be rejected.");
         }
 
         if (request.getComment() == null || request.getComment().isBlank()) {
