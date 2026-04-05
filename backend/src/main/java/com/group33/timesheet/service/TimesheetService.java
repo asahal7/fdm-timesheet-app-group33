@@ -1,5 +1,7 @@
 package com.group33.timesheet.service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,9 +15,11 @@ import com.group33.timesheet.domain.DecisionType;
 import com.group33.timesheet.domain.Timesheet;
 import com.group33.timesheet.domain.TimesheetEntry;
 import com.group33.timesheet.domain.TimesheetStatus;
+import com.group33.timesheet.domain.UserRole;
 import com.group33.timesheet.dto.AddTimesheetEntryRequest;
 import com.group33.timesheet.dto.ApprovalRequest;
 import com.group33.timesheet.dto.CreateTimesheetRequest;
+import com.group33.timesheet.dto.FinanceTimesheetResponse;
 import com.group33.timesheet.exception.BadRequestException;
 import com.group33.timesheet.exception.ResourceNotFoundException;
 import com.group33.timesheet.repository.ApprovalDecisionRepository;
@@ -206,5 +210,96 @@ public class TimesheetService {
         );
 
         return timesheetRepository.save(timesheet);
+    }
+
+    @Transactional(readOnly = true)
+    public List<FinanceTimesheetResponse> getApprovedTimesheetsForFinance(
+            UserRole userRole,
+            String consultantId,
+            String managerId,
+            LocalDate fromDate,
+            LocalDate toDate
+    ) {
+        requireFinanceRole(userRole);
+
+        return timesheetRepository.findByStatus(TimesheetStatus.APPROVED).stream()
+                .filter(timesheet -> consultantId == null || consultantId.isBlank()
+                        || consultantId.equals(timesheet.getConsultantId()))
+                .filter(timesheet -> managerId == null || managerId.isBlank()
+                        || managerId.equals(timesheet.getManagerId()))
+                .filter(timesheet -> fromDate == null
+                        || !timesheet.getWeekStart().isBefore(fromDate))
+                .filter(timesheet -> toDate == null
+                        || !timesheet.getWeekEnd().isAfter(toDate))
+                .map(this::mapToFinanceResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public String exportApprovedTimesheetsCsv(
+            UserRole userRole,
+            String consultantId,
+            String managerId,
+            LocalDate fromDate,
+            LocalDate toDate
+    ) {
+        requireFinanceRole(userRole);
+
+        List<FinanceTimesheetResponse> timesheets = getApprovedTimesheetsForFinance(
+                userRole, consultantId, managerId, fromDate, toDate
+        );
+
+        StringBuilder csv = new StringBuilder();
+        csv.append("Timesheet ID,Consultant ID,Manager ID,Week Start,Week End,Status,Total Hours\n");
+
+        for (FinanceTimesheetResponse timesheet : timesheets) {
+            csv.append(timesheet.getId()).append(",")
+                    .append(safeCsv(timesheet.getConsultantId())).append(",")
+                    .append(safeCsv(timesheet.getManagerId())).append(",")
+                    .append(timesheet.getWeekStart()).append(",")
+                    .append(timesheet.getWeekEnd()).append(",")
+                    .append(timesheet.getStatus()).append(",")
+                    .append(timesheet.getTotalHours())
+                    .append("\n");
+        }
+
+        return csv.toString();
+    }
+
+    private void requireFinanceRole(UserRole userRole) {
+        if (userRole != UserRole.FINANCE) {
+            throw new BadRequestException("Access denied. Finance role is required.");
+        }
+    }
+
+    private FinanceTimesheetResponse mapToFinanceResponse(Timesheet timesheet) {
+        return new FinanceTimesheetResponse(
+                timesheet.getId(),
+                timesheet.getConsultantId(),
+                timesheet.getManagerId(),
+                timesheet.getWeekStart(),
+                timesheet.getWeekEnd(),
+                timesheet.getStatus(),
+                calculateTotalHours(timesheet)
+        );
+    }
+
+    private BigDecimal calculateTotalHours(Timesheet timesheet) {
+        if (timesheet.getEntries() == null || timesheet.getEntries().isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        return timesheet.getEntries().stream()
+                .map(TimesheetEntry::getHours)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private String safeCsv(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        String escaped = value.replace("\"", "\"\"");
+        return "\"" + escaped + "\"";
     }
 }
