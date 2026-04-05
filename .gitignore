@@ -1,0 +1,22 @@
+# Maven / Java build
+target/
+*.class
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# Mac
+.DS_Store
+
+# Env files
+.env
