@@ -1,5 +1,7 @@
 export type TimesheetStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED';
 
+export type UserRole = 'CONSULTANT' | 'MANAGER' | 'FINANCE';
+
 export type DayOfWeek =
   | 'MONDAY'
   | 'TUESDAY'
@@ -24,6 +26,16 @@ export interface TimesheetResponse {
   submittedAt: string | null;
   locked: boolean;
   entries: EntryResponse[];
+}
+
+export interface FinanceTimesheetResponse {
+  id: string;
+  consultantId: string;
+  managerId: string;
+  weekStart: string;
+  weekEnd: string;
+  status: TimesheetStatus;
+  totalHours: number;
 }
 
 export interface CreateTimesheetRequest {

@@ -3,12 +3,18 @@ import type {
   AddEntryRequest,
   ApprovalRequest,
   CreateTimesheetRequest,
+  FinanceTimesheetResponse,
   TimesheetResponse,
+  UserRole,
 } from '../types/types';
 
 const api = axios.create({
   baseURL: '',
 });
+
+export const setUserRole = (role: UserRole) => {
+  api.defaults.headers.common['X-User-Role'] = role;
+};
 
 export const createTimesheet = (data: CreateTimesheetRequest) =>
   api.post<TimesheetResponse>('/timesheets', data);
@@ -30,3 +36,23 @@ export const approveTimesheet = (id: string, data: ApprovalRequest) =>
 
 export const rejectTimesheet = (id: string, data: ApprovalRequest) =>
   api.post<TimesheetResponse>(`/timesheets/${id}/reject`, data);
+
+export const getFinanceTimesheets = (params?: {
+  consultantId?: string;
+  managerId?: string;
+  fromDate?: string;
+  toDate?: string;
+}) =>
+  api.get<FinanceTimesheetResponse[]>('/timesheets/finance', { params });
+
+export const exportFinanceCsv = (params?: {
+  consultantId?: string;
+  managerId?: string;
+  fromDate?: string;
+  toDate?: string;
+}) =>
+  api.get<string>('/timesheets/finance/export', {
+    params,
+    responseType: 'blob',
+  });
+
