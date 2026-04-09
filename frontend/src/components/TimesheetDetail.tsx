@@ -62,7 +62,7 @@ export default function TimesheetDetail({ timesheetId, onBack }: Props) {
     setError('');
     setSuccess('');
     try {
-      await submitTimesheet(timesheetId);
+      await submitTimesheet(timesheetId, timesheet!.consultantId);
       setSuccess('Timesheet submitted for approval.');
       load();
     } catch (err: any) {

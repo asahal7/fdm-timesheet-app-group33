@@ -28,8 +28,12 @@ export const getTimesheetById = (id: string) =>
 export const addEntry = (id: string, data: AddEntryRequest) =>
   api.post<TimesheetResponse>(`/timesheets/${id}/entries`, data);
 
-export const submitTimesheet = (id: string) =>
-  api.post<TimesheetResponse>(`/timesheets/${id}/submit`);
+export const submitTimesheet = (id: string, consultantId: string) =>
+  api.post<TimesheetResponse>(`/timesheets/${id}/submit`, null, {
+    headers: {
+      'X-Consultant-Id': consultantId,
+    },
+  });
 
 export const approveTimesheet = (id: string, data: ApprovalRequest) =>
   api.post<TimesheetResponse>(`/timesheets/${id}/approve`, data);
@@ -55,4 +59,3 @@ export const exportFinanceCsv = (params?: {
     params,
     responseType: 'blob',
   });
-
