@@ -43,7 +43,7 @@ class TimesheetApplicationTests {
         timesheet = timesheetService.addEntry(timesheet.getId(), entryRequest);
         assertEquals(1, timesheet.getEntries().size());
 
-        timesheet = timesheetService.submitTimesheet(timesheet.getId());
+        timesheet = timesheetService.submitTimesheet(timesheet.getId(),timesheet.getConsultantId() );
         assertEquals(TimesheetStatus.PENDING_APPROVAL, timesheet.getStatus());
 
         ApprovalRequest approvalRequest = new ApprovalRequest();
@@ -69,7 +69,7 @@ class TimesheetApplicationTests {
         entryRequest.setHours(BigDecimal.valueOf(7.5));
 
         timesheetService.addEntry(timesheet.getId(), entryRequest);
-        timesheetService.submitTimesheet(timesheet.getId());
+        timesheetService.submitTimesheet(timesheet.getId(), timesheet.getConsultantId());
 
         ApprovalRequest wrongApprovalRequest = new ApprovalRequest();
         wrongApprovalRequest.setManagerId("MANAGER_WRONG");
@@ -95,7 +95,7 @@ class TimesheetApplicationTests {
 
         BadRequestException exception = assertThrows(
                 BadRequestException.class,
-                () -> timesheetService.submitTimesheet(timesheet.getId())
+                () -> timesheetService.submitTimesheet(timesheet.getId(), timesheet.getConsultantId())
         );
 
         assertEquals("Cannot submit a timesheet with no entries.", exception.getMessage());
@@ -160,7 +160,7 @@ class TimesheetApplicationTests {
         firstEntry.setHours(BigDecimal.valueOf(8));
 
         timesheetService.addEntry(timesheet.getId(), firstEntry);
-        timesheetService.submitTimesheet(timesheet.getId());
+        timesheetService.submitTimesheet(timesheet.getId(), timesheet.getConsultantId());
 
         AddTimesheetEntryRequest secondEntry = new AddTimesheetEntryRequest();
         secondEntry.setDay(DayOfWeek.TUESDAY);
@@ -189,7 +189,7 @@ class TimesheetApplicationTests {
         firstEntry.setHours(BigDecimal.valueOf(8));
 
         timesheetService.addEntry(timesheet.getId(), firstEntry);
-        timesheetService.submitTimesheet(timesheet.getId());
+        timesheetService.submitTimesheet(timesheet.getId(), timesheet.getConsultantId());
 
         ApprovalRequest approvalRequest = new ApprovalRequest();
         approvalRequest.setManagerId("MANAGER_APPROVED");

@@ -113,7 +113,7 @@ public class TimesheetService {
         return timesheetRepository.save(timesheet);
     }
 
-    public Timesheet submitTimesheet(UUID timesheetId) {
+    public Timesheet submitTimesheet(UUID timesheetId, String consultantId) {
         Timesheet timesheet = getTimesheetById(timesheetId);
 
         if (timesheet.getStatus() != TimesheetStatus.DRAFT) {

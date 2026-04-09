@@ -62,8 +62,9 @@ public class TimesheetController {
     }
 
     @PostMapping("/{id}/submit")
-    public TimesheetResponse submit(@PathVariable UUID id) {
-        return TimesheetResponse.from(timesheetService.submitTimesheet(id));
+    public TimesheetResponse submit(@PathVariable UUID id,
+                                    @RequestHeader("X-Consultant-Id") String consultantId) {
+        return TimesheetResponse.from(timesheetService.submitTimesheet(id, consultantId));
     }
 
     @PostMapping("/{id}/approve")
