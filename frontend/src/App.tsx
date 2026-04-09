@@ -4,6 +4,7 @@ import {
   Button,
   ButtonGroup,
   Container,
+  TextField,
   Typography,
 } from '@mui/material';
 import { getAllTimesheets, setUserRole } from './api/timesheetApi';
@@ -17,6 +18,9 @@ export default function App() {
   const [timesheets, setTimesheets] = useState<TimesheetResponse[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
+  const [userId, setUserId] = useState('');
+  const [pendingRole, setPendingRole] = useState<UserRole | null>(null);
+  const [userIdError, setUserIdError] = useState('');
 
   const loadTimesheets = async () => {
     try {
@@ -28,14 +32,22 @@ export default function App() {
   };
 
  useEffect(() => {
-    if (role && role !== 'FINANCE') {
+    if (role) {
       setUserRole(role);
-      loadTimesheets();
-    }
-    if (role === 'FINANCE') {
-      setUserRole(role);
+      if (role !== 'FINANCE') {
+        loadTimesheets();
+      }
     }
   }, [role]);
+
+  const handleConfirmRole = () => {
+    if (!userId.trim()) {
+      setUserIdError('Please enter your ID to continue.');
+      return;
+    }
+    setUserIdError('');
+    setRole(pendingRole);
+  };
 
   if (!role) {
     return (
@@ -46,29 +58,50 @@ export default function App() {
         <Typography variant="body1" sx={{ mb: 4 }} color="text.secondary">
           Select your role to continue
         </Typography>
-        <ButtonGroup orientation="vertical" fullWidth>
+        <ButtonGroup orientation="vertical" fullWidth sx={{ mb: 3 }}>
           <Button
-            variant="outlined"
+            variant={pendingRole === 'CONSULTANT' ? 'contained' : 'outlined'}
             size="large"
-            onClick={() => setRole('CONSULTANT')}
+            onClick={() => setPendingRole('CONSULTANT')}
           >
             Consultant
           </Button>
           <Button
-            variant="outlined"
+            variant={pendingRole === 'MANAGER' ? 'contained' : 'outlined'}
             size="large"
-            onClick={() => setRole('MANAGER')}
+            onClick={() => setPendingRole('MANAGER')}
           >
             Line Manager
           </Button>
           <Button
-            variant="outlined"
+            variant={pendingRole === 'FINANCE' ? 'contained' : 'outlined'}
             size="large"
-            onClick={() => setRole('FINANCE')}
+            onClick={() => setPendingRole('FINANCE')}
           >
             Finance Team
           </Button>
         </ButtonGroup>
+        {pendingRole && (
+          <Box>
+            <TextField
+              label="Enter your Employee ID"
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              fullWidth
+              error={!!userIdError}
+              helperText={userIdError}
+              sx={{ mb: 2 }}
+            />
+            <Button
+              variant="contained"
+              fullWidth
+              size="large"
+              onClick={handleConfirmRole}
+            >
+              Continue as {pendingRole}
+            </Button>
+          </Box>
+        )}
       </Container>
     );
   }
@@ -78,7 +111,14 @@ export default function App() {
       <Container maxWidth="md" sx={{ py: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
           <Typography variant="h4">FDM Timesheets — Finance</Typography>
-          <Button variant="outlined" onClick={() => setRole(null)}>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setRole(null);
+              setPendingRole(null);
+              setUserId('');
+            }}
+          >
             Switch Role
           </Button>
         </Box>
@@ -92,9 +132,16 @@ export default function App() {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
         <Typography variant="h4">
           FDM Timesheets —{' '}
-          {role === 'CONSULTANT' ? 'Consultant' : 'Line Manager'}
+          {role === 'CONSULTANT' ? 'Consultant' : 'Line Manager'} ({userId})
         </Typography>
-        <Button variant="outlined" onClick={() => setRole(null)}>
+        <Button
+          variant="outlined"
+          onClick={() => {
+            setRole(null);
+            setPendingRole(null);
+            setUserId('');
+          }}
+        >
           Switch Role
         </Button>
       </Box>
