@@ -38,8 +38,9 @@ public class TimesheetController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public TimesheetResponse createTimesheet(@RequestBody CreateTimesheetRequest request) {
-        return TimesheetResponse.from(timesheetService.createTimesheet(request));
+    public TimesheetResponse createTimesheet(@RequestHeader("X-Consultant-Id") String consultantId,
+                                             @RequestBody CreateTimesheetRequest request) {
+        return TimesheetResponse.from(timesheetService.createTimesheet(request, consultantId));
     }
 
     @GetMapping
@@ -57,8 +58,9 @@ public class TimesheetController {
 
     @PostMapping("/{id}/entries")
     public TimesheetResponse addEntry(@PathVariable UUID id,
+                                      @RequestHeader("X-User-Role") UserRole userRole,
                                       @RequestBody AddTimesheetEntryRequest request) {
-        return TimesheetResponse.from(timesheetService.addEntry(id, request));
+        return TimesheetResponse.from(timesheetService.addEntry(id, request, userRole));
     }
 
     @PostMapping("/{id}/submit")
@@ -69,14 +71,16 @@ public class TimesheetController {
 
     @PostMapping("/{id}/approve")
     public TimesheetResponse approve(@PathVariable UUID id,
+                                     @RequestHeader("X-User-Role") UserRole userRole,
                                      @RequestBody ApprovalRequest request) {
-        return TimesheetResponse.from(timesheetService.approveTimesheet(id, request));
+        return TimesheetResponse.from(timesheetService.approveTimesheet(id, request, userRole));
     }
 
     @PostMapping("/{id}/reject")
     public TimesheetResponse reject(@PathVariable UUID id,
+                                    @RequestHeader("X-User-Role") UserRole userRole,
                                     @RequestBody ApprovalRequest request) {
-        return TimesheetResponse.from(timesheetService.rejectTimesheet(id, request));
+        return TimesheetResponse.from(timesheetService.rejectTimesheet(id, request, userRole));
     }
 
     @GetMapping("/finance")

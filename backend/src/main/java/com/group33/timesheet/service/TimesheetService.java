@@ -42,9 +42,13 @@ public class TimesheetService {
         this.auditLogEntryRepository = auditLogEntryRepository;
     }
 
-    public Timesheet createTimesheet(CreateTimesheetRequest request) {
+    public Timesheet createTimesheet(CreateTimesheetRequest request, String callerConsultantId) {
         if (request.getConsultantId() == null || request.getConsultantId().isBlank()) {
             throw new BadRequestException("consultantId is required.");
+        }
+
+        if (!request.getConsultantId().equals(callerConsultantId)) {
+            throw new BadRequestException("You can only create timesheets for yourself.");
         }
         if (request.getManagerId() == null || request.getManagerId().isBlank()) {
             throw new BadRequestException("managerId is required.");
@@ -80,7 +84,9 @@ public class TimesheetService {
                 .orElseThrow(() -> new ResourceNotFoundException("Timesheet not found: " + id));
     }
 
-    public Timesheet addEntry(UUID timesheetId, AddTimesheetEntryRequest request) {
+    public Timesheet addEntry(UUID timesheetId, AddTimesheetEntryRequest request, UserRole callerRole) {
+        requireConsultantRole(callerRole);
+
         Timesheet timesheet = getTimesheetById(timesheetId);
 
         if (timesheet.getStatus() != TimesheetStatus.DRAFT) {
@@ -116,6 +122,10 @@ public class TimesheetService {
     public Timesheet submitTimesheet(UUID timesheetId, String consultantId) {
         Timesheet timesheet = getTimesheetById(timesheetId);
 
+        if (!timesheet.getConsultantId().equals(consultantId)) {
+            throw new BadRequestException("You can only submit your own timesheets.");
+        }
+
         if (timesheet.getStatus() != TimesheetStatus.DRAFT) {
             throw new BadRequestException("Only DRAFT timesheets can be submitted.");
         }
@@ -138,7 +148,9 @@ public class TimesheetService {
         return timesheetRepository.save(timesheet);
     }
 
-    public Timesheet approveTimesheet(UUID timesheetId, ApprovalRequest request) {
+    public Timesheet approveTimesheet(UUID timesheetId, ApprovalRequest request, UserRole callerRole) {
+        requireManagerRole(callerRole);
+
         Timesheet timesheet = getTimesheetById(timesheetId);
 
         if (!timesheet.getManagerId().equals(request.getManagerId())) {
@@ -173,7 +185,9 @@ public class TimesheetService {
         return timesheetRepository.save(timesheet);
     }
 
-    public Timesheet rejectTimesheet(UUID timesheetId, ApprovalRequest request) {
+    public Timesheet rejectTimesheet(UUID timesheetId, ApprovalRequest request, UserRole callerRole) {
+        requireManagerRole(callerRole);
+
         Timesheet timesheet = getTimesheetById(timesheetId);
 
         if (!timesheet.getManagerId().equals(request.getManagerId())) {
@@ -264,6 +278,18 @@ public class TimesheetService {
         }
 
         return csv.toString();
+    }
+
+    private void requireConsultantRole(UserRole userRole) {
+        if (userRole != UserRole.CONSULTANT) {
+            throw new BadRequestException("Access denied. Consultant role is required.");
+        }
+    }
+
+    private void requireManagerRole(UserRole userRole) {
+        if (userRole != UserRole.MANAGER) {
+            throw new BadRequestException("Access denied. Manager role is required.");
+        }
     }
 
     private void requireFinanceRole(UserRole userRole) {

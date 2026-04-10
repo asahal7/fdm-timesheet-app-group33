@@ -10,11 +10,11 @@ import {
 import { createTimesheet } from '../api/timesheetApi';
 
 interface Props {
+  userId: string;
   onCreated: () => void;
 }
 
-export default function CreateTimesheetForm({ onCreated }: Props) {
-  const [consultantId, setConsultantId] = useState('');
+export default function CreateTimesheetForm({ userId, onCreated }: Props) {
   const [managerId, setManagerId] = useState('');
   const [weekStart, setWeekStart] = useState('');
   const [weekEnd, setWeekEnd] = useState('');
@@ -26,9 +26,8 @@ export default function CreateTimesheetForm({ onCreated }: Props) {
     setError('');
     setSuccess('');
     try {
-      await createTimesheet({ consultantId, managerId, weekStart, weekEnd });
+      await createTimesheet({ consultantId: userId, managerId, weekStart, weekEnd }, userId);
       setSuccess('Timesheet created successfully.');
-      setConsultantId('');
       setManagerId('');
       setWeekStart('');
       setWeekEnd('');
@@ -46,14 +45,6 @@ export default function CreateTimesheetForm({ onCreated }: Props) {
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
       <Box component="form" onSubmit={handleSubmit}>
-        <TextField
-          label="Consultant ID"
-          value={consultantId}
-          onChange={(e) => setConsultantId(e.target.value)}
-          fullWidth
-          required
-          sx={{ mb: 2 }}
-        />
         <TextField
           label="Manager ID"
           value={managerId}

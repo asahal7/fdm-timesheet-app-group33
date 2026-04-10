@@ -20,11 +20,13 @@ import {
   rejectTimesheet,
   submitTimesheet,
 } from '../api/timesheetApi';
-import type { TimesheetResponse, TimesheetStatus } from '../types/types';
+import type { TimesheetResponse, TimesheetStatus, UserRole } from '../types/types';
 import AddEntryForm from './AddEntryForm';
 
 interface Props {
   timesheetId: string;
+  userId: string;
+  role: UserRole;
   onBack: () => void;
 }
 
@@ -38,7 +40,7 @@ const statusColor: Record<
   REJECTED: 'error',
 };
 
-export default function TimesheetDetail({ timesheetId, onBack }: Props) {
+export default function TimesheetDetail({ timesheetId, userId, role, onBack }: Props) {
   const [timesheet, setTimesheet] = useState<TimesheetResponse | null>(null);
   const [managerId, setManagerId] = useState('');
   const [comment, setComment] = useState('');
@@ -62,7 +64,7 @@ export default function TimesheetDetail({ timesheetId, onBack }: Props) {
     setError('');
     setSuccess('');
     try {
-      await submitTimesheet(timesheetId, timesheet!.consultantId);
+      await submitTimesheet(timesheetId, userId);
       setSuccess('Timesheet submitted for approval.');
       load();
     } catch (err: any) {
@@ -154,11 +156,11 @@ export default function TimesheetDetail({ timesheetId, onBack }: Props) {
           </TableBody>
         </Table>
       )}
-      {timesheet.status === 'DRAFT' && !timesheet.locked && (
+      {role === 'CONSULTANT' && timesheet.status === 'DRAFT' && !timesheet.locked && (
         <AddEntryForm timesheetId={timesheetId} onEntryAdded={load} />
       )}
       <Divider sx={{ my: 2 }} />
-      {timesheet.status === 'DRAFT' && (
+      {role === 'CONSULTANT' && userId === timesheet.consultantId && timesheet.status === 'DRAFT' && (
         <Button variant="contained" onClick={handleSubmit}>
           Submit for Approval
         </Button>

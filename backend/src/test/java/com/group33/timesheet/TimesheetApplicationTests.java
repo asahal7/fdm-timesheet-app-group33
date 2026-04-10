@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import com.group33.timesheet.domain.Timesheet;
 import com.group33.timesheet.domain.TimesheetStatus;
+import com.group33.timesheet.domain.UserRole;
 import com.group33.timesheet.dto.AddTimesheetEntryRequest;
 import com.group33.timesheet.dto.ApprovalRequest;
 import com.group33.timesheet.dto.CreateTimesheetRequest;
@@ -33,25 +34,123 @@ class TimesheetApplicationTests {
         createRequest.setWeekStart(LocalDate.of(2026, 4, 1));
         createRequest.setWeekEnd(LocalDate.of(2026, 4, 7));
 
-        Timesheet timesheet = timesheetService.createTimesheet(createRequest);
+        Timesheet timesheet = timesheetService.createTimesheet(createRequest, createRequest.getConsultantId());
         assertNotNull(timesheet.getId());
 
         AddTimesheetEntryRequest entryRequest = new AddTimesheetEntryRequest();
         entryRequest.setDay(DayOfWeek.MONDAY);
         entryRequest.setHours(BigDecimal.valueOf(8));
 
-        timesheet = timesheetService.addEntry(timesheet.getId(), entryRequest);
+        timesheet = timesheetService.addEntry(timesheet.getId(), entryRequest, UserRole.CONSULTANT);
         assertEquals(1, timesheet.getEntries().size());
 
-        timesheet = timesheetService.submitTimesheet(timesheet.getId(),timesheet.getConsultantId() );
+        timesheet = timesheetService.submitTimesheet(timesheet.getId(), timesheet.getConsultantId());
         assertEquals(TimesheetStatus.PENDING_APPROVAL, timesheet.getStatus());
 
         ApprovalRequest approvalRequest = new ApprovalRequest();
         approvalRequest.setManagerId("MANAGER_TEST");
         approvalRequest.setComment("Looks good");
 
-        timesheet = timesheetService.approveTimesheet(timesheet.getId(), approvalRequest);
+        timesheet = timesheetService.approveTimesheet(timesheet.getId(), approvalRequest, UserRole.MANAGER);
         assertEquals(TimesheetStatus.APPROVED, timesheet.getStatus());
+    }
+
+    @Test
+    void createTimesheet_forAnotherConsultant_shouldThrowBadRequestException() {
+        CreateTimesheetRequest createRequest = new CreateTimesheetRequest();
+        createRequest.setConsultantId("CONSULTANT_VICTIM");
+        createRequest.setManagerId("MANAGER_A");
+        createRequest.setWeekStart(LocalDate.of(2026, 7, 1));
+        createRequest.setWeekEnd(LocalDate.of(2026, 7, 7));
+
+        BadRequestException exception = assertThrows(
+                BadRequestException.class,
+                () -> timesheetService.createTimesheet(createRequest, "CONSULTANT_ATTACKER")
+        );
+
+        assertEquals("You can only create timesheets for yourself.", exception.getMessage());
+    }
+
+    @Test
+    void submitTimesheet_forAnotherConsultant_shouldThrowBadRequestException() {
+        CreateTimesheetRequest createRequest = new CreateTimesheetRequest();
+        createRequest.setConsultantId("CONSULTANT_OWNER");
+        createRequest.setManagerId("MANAGER_A");
+        createRequest.setWeekStart(LocalDate.of(2026, 6, 1));
+        createRequest.setWeekEnd(LocalDate.of(2026, 6, 7));
+
+        Timesheet timesheet = timesheetService.createTimesheet(createRequest, createRequest.getConsultantId());
+
+        AddTimesheetEntryRequest entryRequest = new AddTimesheetEntryRequest();
+        entryRequest.setDay(DayOfWeek.MONDAY);
+        entryRequest.setHours(BigDecimal.valueOf(8));
+
+        timesheetService.addEntry(timesheet.getId(), entryRequest, UserRole.CONSULTANT);
+
+        BadRequestException exception = assertThrows(
+                BadRequestException.class,
+                () -> timesheetService.submitTimesheet(timesheet.getId(), "CONSULTANT_OTHER")
+        );
+
+        assertEquals("You can only submit your own timesheets.", exception.getMessage());
+    }
+
+    @Test
+    void approveTimesheet_withConsultantRole_shouldThrowBadRequestException() {
+        CreateTimesheetRequest createRequest = new CreateTimesheetRequest();
+        createRequest.setConsultantId("CONSULTANT_ROLE_CHECK");
+        createRequest.setManagerId("MANAGER_ROLE_CHECK");
+        createRequest.setWeekStart(LocalDate.of(2026, 6, 8));
+        createRequest.setWeekEnd(LocalDate.of(2026, 6, 14));
+
+        Timesheet timesheet = timesheetService.createTimesheet(createRequest, createRequest.getConsultantId());
+
+        AddTimesheetEntryRequest entryRequest = new AddTimesheetEntryRequest();
+        entryRequest.setDay(DayOfWeek.MONDAY);
+        entryRequest.setHours(BigDecimal.valueOf(8));
+
+        timesheetService.addEntry(timesheet.getId(), entryRequest, UserRole.CONSULTANT);
+        timesheetService.submitTimesheet(timesheet.getId(), "CONSULTANT_ROLE_CHECK");
+
+        ApprovalRequest approvalRequest = new ApprovalRequest();
+        approvalRequest.setManagerId("MANAGER_ROLE_CHECK");
+        approvalRequest.setComment("Trying to self-approve");
+
+        BadRequestException exception = assertThrows(
+                BadRequestException.class,
+                () -> timesheetService.approveTimesheet(timesheet.getId(), approvalRequest, UserRole.CONSULTANT)
+        );
+
+        assertEquals("Access denied. Manager role is required.", exception.getMessage());
+    }
+
+    @Test
+    void rejectTimesheet_withConsultantRole_shouldThrowBadRequestException() {
+        CreateTimesheetRequest createRequest = new CreateTimesheetRequest();
+        createRequest.setConsultantId("CONSULTANT_REJECT_ROLE");
+        createRequest.setManagerId("MANAGER_REJECT_ROLE");
+        createRequest.setWeekStart(LocalDate.of(2026, 6, 15));
+        createRequest.setWeekEnd(LocalDate.of(2026, 6, 21));
+
+        Timesheet timesheet = timesheetService.createTimesheet(createRequest, createRequest.getConsultantId());
+
+        AddTimesheetEntryRequest entryRequest = new AddTimesheetEntryRequest();
+        entryRequest.setDay(DayOfWeek.MONDAY);
+        entryRequest.setHours(BigDecimal.valueOf(8));
+
+        timesheetService.addEntry(timesheet.getId(), entryRequest, UserRole.CONSULTANT);
+        timesheetService.submitTimesheet(timesheet.getId(), "CONSULTANT_REJECT_ROLE");
+
+        ApprovalRequest rejectionRequest = new ApprovalRequest();
+        rejectionRequest.setManagerId("MANAGER_REJECT_ROLE");
+        rejectionRequest.setComment("Trying to self-reject");
+
+        BadRequestException exception = assertThrows(
+                BadRequestException.class,
+                () -> timesheetService.rejectTimesheet(timesheet.getId(), rejectionRequest, UserRole.CONSULTANT)
+        );
+
+        assertEquals("Access denied. Manager role is required.", exception.getMessage());
     }
 
     @Test
@@ -62,13 +161,13 @@ class TimesheetApplicationTests {
         createRequest.setWeekStart(LocalDate.of(2026, 4, 8));
         createRequest.setWeekEnd(LocalDate.of(2026, 4, 14));
 
-        Timesheet timesheet = timesheetService.createTimesheet(createRequest);
+        Timesheet timesheet = timesheetService.createTimesheet(createRequest, createRequest.getConsultantId());
 
         AddTimesheetEntryRequest entryRequest = new AddTimesheetEntryRequest();
         entryRequest.setDay(DayOfWeek.TUESDAY);
         entryRequest.setHours(BigDecimal.valueOf(7.5));
 
-        timesheetService.addEntry(timesheet.getId(), entryRequest);
+        timesheetService.addEntry(timesheet.getId(), entryRequest, UserRole.CONSULTANT);
         timesheetService.submitTimesheet(timesheet.getId(), timesheet.getConsultantId());
 
         ApprovalRequest wrongApprovalRequest = new ApprovalRequest();
@@ -77,7 +176,7 @@ class TimesheetApplicationTests {
 
         BadRequestException exception = assertThrows(
                 BadRequestException.class,
-                () -> timesheetService.approveTimesheet(timesheet.getId(), wrongApprovalRequest)
+                () -> timesheetService.approveTimesheet(timesheet.getId(), wrongApprovalRequest, UserRole.MANAGER)
         );
 
         assertEquals("Only the assigned manager can approve this timesheet.", exception.getMessage());
@@ -91,7 +190,7 @@ class TimesheetApplicationTests {
         createRequest.setWeekStart(LocalDate.of(2026, 4, 15));
         createRequest.setWeekEnd(LocalDate.of(2026, 4, 21));
 
-        Timesheet timesheet = timesheetService.createTimesheet(createRequest);
+        Timesheet timesheet = timesheetService.createTimesheet(createRequest, createRequest.getConsultantId());
 
         BadRequestException exception = assertThrows(
                 BadRequestException.class,
@@ -109,7 +208,7 @@ class TimesheetApplicationTests {
         createRequest.setWeekStart(LocalDate.of(2026, 4, 22));
         createRequest.setWeekEnd(LocalDate.of(2026, 4, 28));
 
-        Timesheet timesheet = timesheetService.createTimesheet(createRequest);
+        Timesheet timesheet = timesheetService.createTimesheet(createRequest, createRequest.getConsultantId());
 
         ApprovalRequest approvalRequest = new ApprovalRequest();
         approvalRequest.setManagerId("MANAGER_DRAFT");
@@ -117,7 +216,7 @@ class TimesheetApplicationTests {
 
         BadRequestException exception = assertThrows(
                 BadRequestException.class,
-                () -> timesheetService.approveTimesheet(timesheet.getId(), approvalRequest)
+                () -> timesheetService.approveTimesheet(timesheet.getId(), approvalRequest, UserRole.MANAGER)
         );
 
         assertEquals("Only PENDING_APPROVAL timesheets can be approved.", exception.getMessage());
@@ -131,7 +230,7 @@ class TimesheetApplicationTests {
         createRequest.setWeekStart(LocalDate.of(2026, 4, 29));
         createRequest.setWeekEnd(LocalDate.of(2026, 5, 5));
 
-        Timesheet timesheet = timesheetService.createTimesheet(createRequest);
+        Timesheet timesheet = timesheetService.createTimesheet(createRequest, createRequest.getConsultantId());
 
         ApprovalRequest rejectionRequest = new ApprovalRequest();
         rejectionRequest.setManagerId("MANAGER_REJECT");
@@ -139,7 +238,7 @@ class TimesheetApplicationTests {
 
         BadRequestException exception = assertThrows(
                 BadRequestException.class,
-                () -> timesheetService.rejectTimesheet(timesheet.getId(), rejectionRequest)
+                () -> timesheetService.rejectTimesheet(timesheet.getId(), rejectionRequest, UserRole.MANAGER)
         );
 
         assertEquals("Only PENDING_APPROVAL timesheets can be rejected.", exception.getMessage());
@@ -153,13 +252,13 @@ class TimesheetApplicationTests {
         createRequest.setWeekStart(LocalDate.of(2026, 5, 6));
         createRequest.setWeekEnd(LocalDate.of(2026, 5, 12));
 
-        Timesheet timesheet = timesheetService.createTimesheet(createRequest);
+        Timesheet timesheet = timesheetService.createTimesheet(createRequest, createRequest.getConsultantId());
 
         AddTimesheetEntryRequest firstEntry = new AddTimesheetEntryRequest();
         firstEntry.setDay(DayOfWeek.MONDAY);
         firstEntry.setHours(BigDecimal.valueOf(8));
 
-        timesheetService.addEntry(timesheet.getId(), firstEntry);
+        timesheetService.addEntry(timesheet.getId(), firstEntry, UserRole.CONSULTANT);
         timesheetService.submitTimesheet(timesheet.getId(), timesheet.getConsultantId());
 
         AddTimesheetEntryRequest secondEntry = new AddTimesheetEntryRequest();
@@ -168,7 +267,7 @@ class TimesheetApplicationTests {
 
         BadRequestException exception = assertThrows(
                 BadRequestException.class,
-                () -> timesheetService.addEntry(timesheet.getId(), secondEntry)
+                () -> timesheetService.addEntry(timesheet.getId(), secondEntry, UserRole.CONSULTANT)
         );
 
         assertEquals("Entries can only be added while the timesheet is in DRAFT status.", exception.getMessage());
@@ -182,20 +281,20 @@ class TimesheetApplicationTests {
         createRequest.setWeekStart(LocalDate.of(2026, 5, 13));
         createRequest.setWeekEnd(LocalDate.of(2026, 5, 19));
 
-        Timesheet timesheet = timesheetService.createTimesheet(createRequest);
+        Timesheet timesheet = timesheetService.createTimesheet(createRequest, createRequest.getConsultantId());
 
         AddTimesheetEntryRequest firstEntry = new AddTimesheetEntryRequest();
         firstEntry.setDay(DayOfWeek.MONDAY);
         firstEntry.setHours(BigDecimal.valueOf(8));
 
-        timesheetService.addEntry(timesheet.getId(), firstEntry);
+        timesheetService.addEntry(timesheet.getId(), firstEntry, UserRole.CONSULTANT);
         timesheetService.submitTimesheet(timesheet.getId(), timesheet.getConsultantId());
 
         ApprovalRequest approvalRequest = new ApprovalRequest();
         approvalRequest.setManagerId("MANAGER_APPROVED");
         approvalRequest.setComment("Approved");
 
-        timesheetService.approveTimesheet(timesheet.getId(), approvalRequest);
+        timesheetService.approveTimesheet(timesheet.getId(), approvalRequest, UserRole.MANAGER);
 
         AddTimesheetEntryRequest secondEntry = new AddTimesheetEntryRequest();
         secondEntry.setDay(DayOfWeek.TUESDAY);
@@ -203,7 +302,7 @@ class TimesheetApplicationTests {
 
         BadRequestException exception = assertThrows(
                 BadRequestException.class,
-                () -> timesheetService.addEntry(timesheet.getId(), secondEntry)
+                () -> timesheetService.addEntry(timesheet.getId(), secondEntry, UserRole.CONSULTANT)
         );
 
         assertEquals("Entries can only be added while the timesheet is in DRAFT status.", exception.getMessage());

@@ -148,6 +148,8 @@ export default function App() {
       {selectedId ? (
         <TimesheetDetail
           timesheetId={selectedId}
+          userId={userId}
+          role={role}
           onBack={() => {
             setSelectedId(null);
             loadTimesheets();
@@ -156,7 +158,7 @@ export default function App() {
       ) : (
         <>
           {role === 'CONSULTANT' && (
-            <CreateTimesheetForm onCreated={loadTimesheets} />
+            <CreateTimesheetForm userId={userId} onCreated={loadTimesheets} />
           )}
           <TimesheetList timesheets={timesheets} onSelect={setSelectedId} />
         </>

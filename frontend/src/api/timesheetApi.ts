@@ -16,8 +16,12 @@ export const setUserRole = (role: UserRole) => {
   api.defaults.headers.common['X-User-Role'] = role;
 };
 
-export const createTimesheet = (data: CreateTimesheetRequest) =>
-  api.post<TimesheetResponse>('/timesheets', data);
+export const createTimesheet = (data: CreateTimesheetRequest, consultantId: string) =>
+  api.post<TimesheetResponse>('/timesheets', data, {
+    headers: {
+      'X-Consultant-Id': consultantId,
+    },
+  });
 
 export const getAllTimesheets = () =>
   api.get<TimesheetResponse[]>('/timesheets');
