@@ -32,12 +32,19 @@ export const getTimesheetById = (id: string) =>
 export const addEntry = (id: string, data: AddEntryRequest) =>
   api.post<TimesheetResponse>(`/timesheets/${id}/entries`, data);
 
-export const submitTimesheet = (id: string, consultantId: string) =>
-  api.post<TimesheetResponse>(`/timesheets/${id}/submit`, null, {
-    headers: {
-      'X-Consultant-Id': consultantId,
-    },
-  });
+export const submitTimesheet = (id: string, consultantId: string, comment?: string) =>
+  api.post<TimesheetResponse>(
+    `/timesheets/${id}/submit`,
+    comment ? { comment } : null,
+    { headers: { 'X-Consultant-Id': consultantId } },
+  );
+
+export const resubmitTimesheet = (id: string, consultantId: string, comment?: string) =>
+  api.post<TimesheetResponse>(
+    `/timesheets/${id}/resubmit`,
+    comment ? { comment } : null,
+    { headers: { 'X-Consultant-Id': consultantId } },
+  );
 
 export const approveTimesheet = (id: string, data: ApprovalRequest) =>
   api.post<TimesheetResponse>(`/timesheets/${id}/approve`, data);

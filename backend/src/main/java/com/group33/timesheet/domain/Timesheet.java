@@ -36,6 +36,8 @@ public class Timesheet {
     @Column(nullable = false)
     private boolean locked;
 
+    private String consultantComment;
+
     @OneToMany(mappedBy = "timesheet", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TimesheetEntry> entries = new ArrayList<>();
 
@@ -83,6 +85,17 @@ public class Timesheet {
         }
         this.status = TimesheetStatus.REJECTED;
         this.locked = false;
+    }
+
+    public void resubmit() {
+        if (status != TimesheetStatus.REJECTED) {
+            throw new IllegalStateException("Only rejected timesheets can be resubmitted.");
+        }
+        if (entries.isEmpty()) {
+            throw new IllegalStateException("Cannot resubmit a timesheet with no entries.");
+        }
+        this.status = TimesheetStatus.PENDING_APPROVAL;
+        this.submittedAt = LocalDateTime.now();
     }
 
     public void addEntry(TimesheetEntry entry) {
@@ -139,6 +152,14 @@ public class Timesheet {
 
     public List<AuditLogEntry> getAuditLogs() {
         return auditLogs;
+    }
+
+    public String getConsultantComment() {
+        return consultantComment;
+    }
+
+    public void setConsultantComment(String consultantComment) {
+        this.consultantComment = consultantComment;
     }
 
     public void setApprovalDecision(ApprovalDecision approvalDecision) {

@@ -16,6 +16,14 @@ export interface EntryResponse {
   hours: number;
 }
 
+export interface ApprovalDecisionResponse {
+  id: string;
+  decision: 'APPROVED' | 'REJECTED';
+  decidedAt: string;
+  managerId: string;
+  comment: string | null;
+}
+
 export interface TimesheetResponse {
   id: string;
   consultantId: string;
@@ -25,6 +33,8 @@ export interface TimesheetResponse {
   status: TimesheetStatus;
   submittedAt: string | null;
   locked: boolean;
+  consultantComment: string | null;
+  approvalDecision: ApprovalDecisionResponse | null;
   entries: EntryResponse[];
 }
 

@@ -10,6 +10,7 @@ import java.util.UUID;
 import com.group33.timesheet.domain.Timesheet;
 import com.group33.timesheet.domain.TimesheetEntry;
 import com.group33.timesheet.domain.TimesheetStatus;
+import com.group33.timesheet.dto.ApprovalDecisionResponse;
 
 public class TimesheetResponse {
 
@@ -21,6 +22,8 @@ public class TimesheetResponse {
     private TimesheetStatus status;
     private LocalDateTime submittedAt;
     private boolean locked;
+    private String consultantComment;
+    private ApprovalDecisionResponse approvalDecision;
     private List<EntryResponse> entries;
 
     public static TimesheetResponse from(Timesheet timesheet) {
@@ -33,6 +36,10 @@ public class TimesheetResponse {
         response.status = timesheet.getStatus();
         response.submittedAt = timesheet.getSubmittedAt();
         response.locked = timesheet.isLocked();
+        response.consultantComment = timesheet.getConsultantComment();
+        response.approvalDecision = timesheet.getApprovalDecision() != null
+                ? ApprovalDecisionResponse.from(timesheet.getApprovalDecision())
+                : null;
         response.entries = timesheet.getEntries()
                 .stream()
                 .map(EntryResponse::from)
@@ -70,6 +77,14 @@ public class TimesheetResponse {
 
     public boolean isLocked() {
         return locked;
+    }
+
+    public String getConsultantComment() {
+        return consultantComment;
+    }
+
+    public ApprovalDecisionResponse getApprovalDecision() {
+        return approvalDecision;
     }
 
     public List<EntryResponse> getEntries() {

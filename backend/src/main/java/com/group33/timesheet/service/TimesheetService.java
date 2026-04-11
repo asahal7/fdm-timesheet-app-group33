@@ -19,6 +19,7 @@ import com.group33.timesheet.domain.UserRole;
 import com.group33.timesheet.dto.AddTimesheetEntryRequest;
 import com.group33.timesheet.dto.ApprovalRequest;
 import com.group33.timesheet.dto.CreateTimesheetRequest;
+import com.group33.timesheet.dto.SubmitTimesheetRequest;
 import com.group33.timesheet.dto.FinanceTimesheetResponse;
 import com.group33.timesheet.exception.BadRequestException;
 import com.group33.timesheet.exception.ResourceNotFoundException;
@@ -89,8 +90,8 @@ public class TimesheetService {
 
         Timesheet timesheet = getTimesheetById(timesheetId);
 
-        if (timesheet.getStatus() != TimesheetStatus.DRAFT) {
-            throw new BadRequestException("Entries can only be added while the timesheet is in DRAFT status.");
+        if (timesheet.getStatus() != TimesheetStatus.DRAFT && timesheet.getStatus() != TimesheetStatus.REJECTED) {
+            throw new BadRequestException("Entries can only be added while the timesheet is in DRAFT or REJECTED status.");
         }
 
         TimesheetEntry entry = new TimesheetEntry(request.getDay(), request.getHours());
@@ -119,7 +120,7 @@ public class TimesheetService {
         return timesheetRepository.save(timesheet);
     }
 
-    public Timesheet submitTimesheet(UUID timesheetId, String consultantId) {
+    public Timesheet submitTimesheet(UUID timesheetId, String consultantId, SubmitTimesheetRequest request) {
         Timesheet timesheet = getTimesheetById(timesheetId);
 
         if (!timesheet.getConsultantId().equals(consultantId)) {
@@ -134,6 +135,8 @@ public class TimesheetService {
             throw new BadRequestException("Cannot submit a timesheet with no entries.");
         }
 
+        String comment = request != null ? request.getComment() : null;
+        timesheet.setConsultantComment(comment);
         timesheet.submit();
 
         auditLogEntryRepository.save(
@@ -141,6 +144,34 @@ public class TimesheetService {
                         AuditActionType.SUBMITTED,
                         timesheet.getConsultantId(),
                         "Timesheet submitted for approval.",
+                        timesheet
+                )
+        );
+
+        return timesheetRepository.save(timesheet);
+    }
+
+    public Timesheet resubmitTimesheet(UUID timesheetId, String consultantId, SubmitTimesheetRequest request) {
+        Timesheet timesheet = getTimesheetById(timesheetId);
+
+        if (!timesheet.getConsultantId().equals(consultantId)) {
+            throw new BadRequestException("You can only resubmit your own timesheets.");
+        }
+
+        if (timesheet.getStatus() != TimesheetStatus.REJECTED) {
+            throw new BadRequestException("Only REJECTED timesheets can be resubmitted.");
+        }
+
+        String comment = request != null ? request.getComment() : null;
+        timesheet.setConsultantComment(comment);
+        timesheet.setApprovalDecision(null);
+        timesheet.resubmit();
+
+        auditLogEntryRepository.save(
+                new AuditLogEntry(
+                        AuditActionType.RESUBMITTED,
+                        timesheet.getConsultantId(),
+                        "Timesheet resubmitted for approval.",
                         timesheet
                 )
         );

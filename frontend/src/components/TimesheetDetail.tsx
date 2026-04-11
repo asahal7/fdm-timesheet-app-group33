@@ -18,6 +18,7 @@ import {
   approveTimesheet,
   getTimesheetById,
   rejectTimesheet,
+  resubmitTimesheet,
   submitTimesheet,
 } from '../api/timesheetApi';
 import type { TimesheetResponse, TimesheetStatus, UserRole } from '../types/types';
@@ -44,6 +45,7 @@ export default function TimesheetDetail({ timesheetId, userId, role, onBack }: P
   const [timesheet, setTimesheet] = useState<TimesheetResponse | null>(null);
   const [managerId, setManagerId] = useState('');
   const [comment, setComment] = useState('');
+  const [submitComment, setSubmitComment] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -64,11 +66,25 @@ export default function TimesheetDetail({ timesheetId, userId, role, onBack }: P
     setError('');
     setSuccess('');
     try {
-      await submitTimesheet(timesheetId, userId);
+      await submitTimesheet(timesheetId, userId, submitComment || undefined);
       setSuccess('Timesheet submitted for approval.');
+      setSubmitComment('');
       load();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Submit failed.');
+    }
+  };
+
+  const handleResubmit = async () => {
+    setError('');
+    setSuccess('');
+    try {
+      await resubmitTimesheet(timesheetId, userId, submitComment || undefined);
+      setSuccess('Timesheet resubmitted for approval.');
+      setSubmitComment('');
+      load();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Resubmit failed.');
     }
   };
 
@@ -132,6 +148,23 @@ export default function TimesheetDetail({ timesheetId, userId, role, onBack }: P
           <strong>Submitted at:</strong> {timesheet.submittedAt}
         </Typography>
       )}
+      {timesheet.consultantComment && (
+        <Typography>
+          <strong>Your comment:</strong> {timesheet.consultantComment}
+        </Typography>
+      )}
+      {timesheet.approvalDecision && (
+        <Box sx={{ mt: 1, p: 1.5, bgcolor: timesheet.approvalDecision.decision === 'APPROVED' ? 'success.50' : 'error.50', borderRadius: 1 }}>
+          <Typography variant="subtitle2">
+            {timesheet.approvalDecision.decision === 'APPROVED' ? 'Approved' : 'Rejected'} by {timesheet.approvalDecision.managerId} on {new Date(timesheet.approvalDecision.decidedAt).toLocaleString()}
+          </Typography>
+          {timesheet.approvalDecision.comment && (
+            <Typography variant="body2">
+              <strong>Manager comment:</strong> {timesheet.approvalDecision.comment}
+            </Typography>
+          )}
+        </Box>
+      )}
       <Divider sx={{ my: 2 }} />
       <Typography variant="subtitle1" gutterBottom>
         Daily Entries
@@ -156,14 +189,31 @@ export default function TimesheetDetail({ timesheetId, userId, role, onBack }: P
           </TableBody>
         </Table>
       )}
-      {role === 'CONSULTANT' && timesheet.status === 'DRAFT' && !timesheet.locked && (
+      {role === 'CONSULTANT' && (timesheet.status === 'DRAFT' || timesheet.status === 'REJECTED') && !timesheet.locked && (
         <AddEntryForm timesheetId={timesheetId} onEntryAdded={load} />
       )}
       <Divider sx={{ my: 2 }} />
-      {role === 'CONSULTANT' && userId === timesheet.consultantId && timesheet.status === 'DRAFT' && (
-        <Button variant="contained" onClick={handleSubmit}>
-          Submit for Approval
-        </Button>
+      {role === 'CONSULTANT' && userId === timesheet.consultantId && (timesheet.status === 'DRAFT' || timesheet.status === 'REJECTED') && (
+        <Box>
+          <TextField
+            label="Comment (optional)"
+            value={submitComment}
+            onChange={(e) => setSubmitComment(e.target.value)}
+            fullWidth
+            multiline
+            rows={2}
+            sx={{ mb: 2 }}
+          />
+          {timesheet.status === 'DRAFT' ? (
+            <Button variant="contained" onClick={handleSubmit}>
+              Submit for Approval
+            </Button>
+          ) : (
+            <Button variant="contained" color="warning" onClick={handleResubmit}>
+              Resubmit for Approval
+            </Button>
+          )}
+        </Box>
       )}
       {timesheet.status === 'PENDING_APPROVAL' && (
         <Box>

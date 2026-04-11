@@ -44,7 +44,7 @@ class TimesheetApplicationTests {
         timesheet = timesheetService.addEntry(timesheet.getId(), entryRequest, UserRole.CONSULTANT);
         assertEquals(1, timesheet.getEntries().size());
 
-        timesheet = timesheetService.submitTimesheet(timesheet.getId(), timesheet.getConsultantId());
+        timesheet = timesheetService.submitTimesheet(timesheet.getId(), timesheet.getConsultantId(), null);
         assertEquals(TimesheetStatus.PENDING_APPROVAL, timesheet.getStatus());
 
         ApprovalRequest approvalRequest = new ApprovalRequest();
@@ -89,7 +89,7 @@ class TimesheetApplicationTests {
 
         BadRequestException exception = assertThrows(
                 BadRequestException.class,
-                () -> timesheetService.submitTimesheet(timesheet.getId(), "CONSULTANT_OTHER")
+                () -> timesheetService.submitTimesheet(timesheet.getId(), "CONSULTANT_OTHER", null)
         );
 
         assertEquals("You can only submit your own timesheets.", exception.getMessage());
@@ -110,7 +110,7 @@ class TimesheetApplicationTests {
         entryRequest.setHours(BigDecimal.valueOf(8));
 
         timesheetService.addEntry(timesheet.getId(), entryRequest, UserRole.CONSULTANT);
-        timesheetService.submitTimesheet(timesheet.getId(), "CONSULTANT_ROLE_CHECK");
+        timesheetService.submitTimesheet(timesheet.getId(), "CONSULTANT_ROLE_CHECK", null);
 
         ApprovalRequest approvalRequest = new ApprovalRequest();
         approvalRequest.setManagerId("MANAGER_ROLE_CHECK");
@@ -139,7 +139,7 @@ class TimesheetApplicationTests {
         entryRequest.setHours(BigDecimal.valueOf(8));
 
         timesheetService.addEntry(timesheet.getId(), entryRequest, UserRole.CONSULTANT);
-        timesheetService.submitTimesheet(timesheet.getId(), "CONSULTANT_REJECT_ROLE");
+        timesheetService.submitTimesheet(timesheet.getId(), "CONSULTANT_REJECT_ROLE", null);
 
         ApprovalRequest rejectionRequest = new ApprovalRequest();
         rejectionRequest.setManagerId("MANAGER_REJECT_ROLE");
@@ -168,7 +168,7 @@ class TimesheetApplicationTests {
         entryRequest.setHours(BigDecimal.valueOf(7.5));
 
         timesheetService.addEntry(timesheet.getId(), entryRequest, UserRole.CONSULTANT);
-        timesheetService.submitTimesheet(timesheet.getId(), timesheet.getConsultantId());
+        timesheetService.submitTimesheet(timesheet.getId(), timesheet.getConsultantId(), null);
 
         ApprovalRequest wrongApprovalRequest = new ApprovalRequest();
         wrongApprovalRequest.setManagerId("MANAGER_WRONG");
@@ -194,7 +194,7 @@ class TimesheetApplicationTests {
 
         BadRequestException exception = assertThrows(
                 BadRequestException.class,
-                () -> timesheetService.submitTimesheet(timesheet.getId(), timesheet.getConsultantId())
+                () -> timesheetService.submitTimesheet(timesheet.getId(), timesheet.getConsultantId(), null)
         );
 
         assertEquals("Cannot submit a timesheet with no entries.", exception.getMessage());
@@ -259,7 +259,7 @@ class TimesheetApplicationTests {
         firstEntry.setHours(BigDecimal.valueOf(8));
 
         timesheetService.addEntry(timesheet.getId(), firstEntry, UserRole.CONSULTANT);
-        timesheetService.submitTimesheet(timesheet.getId(), timesheet.getConsultantId());
+        timesheetService.submitTimesheet(timesheet.getId(), timesheet.getConsultantId(), null);
 
         AddTimesheetEntryRequest secondEntry = new AddTimesheetEntryRequest();
         secondEntry.setDay(DayOfWeek.TUESDAY);
@@ -270,7 +270,7 @@ class TimesheetApplicationTests {
                 () -> timesheetService.addEntry(timesheet.getId(), secondEntry, UserRole.CONSULTANT)
         );
 
-        assertEquals("Entries can only be added while the timesheet is in DRAFT status.", exception.getMessage());
+        assertEquals("Entries can only be added while the timesheet is in DRAFT or REJECTED status.", exception.getMessage());
     }
 
     @Test
@@ -288,7 +288,7 @@ class TimesheetApplicationTests {
         firstEntry.setHours(BigDecimal.valueOf(8));
 
         timesheetService.addEntry(timesheet.getId(), firstEntry, UserRole.CONSULTANT);
-        timesheetService.submitTimesheet(timesheet.getId(), timesheet.getConsultantId());
+        timesheetService.submitTimesheet(timesheet.getId(), timesheet.getConsultantId(), null);
 
         ApprovalRequest approvalRequest = new ApprovalRequest();
         approvalRequest.setManagerId("MANAGER_APPROVED");
@@ -305,6 +305,6 @@ class TimesheetApplicationTests {
                 () -> timesheetService.addEntry(timesheet.getId(), secondEntry, UserRole.CONSULTANT)
         );
 
-        assertEquals("Entries can only be added while the timesheet is in DRAFT status.", exception.getMessage());
+        assertEquals("Entries can only be added while the timesheet is in DRAFT or REJECTED status.", exception.getMessage());
     }
 }

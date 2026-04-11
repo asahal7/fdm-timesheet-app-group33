@@ -23,6 +23,7 @@ import com.group33.timesheet.dto.AddTimesheetEntryRequest;
 import com.group33.timesheet.dto.ApprovalRequest;
 import com.group33.timesheet.dto.CreateTimesheetRequest;
 import com.group33.timesheet.dto.FinanceTimesheetResponse;
+import com.group33.timesheet.dto.SubmitTimesheetRequest;
 import com.group33.timesheet.dto.TimesheetResponse;
 import com.group33.timesheet.service.TimesheetService;
 
@@ -65,8 +66,16 @@ public class TimesheetController {
 
     @PostMapping("/{id}/submit")
     public TimesheetResponse submit(@PathVariable UUID id,
-                                    @RequestHeader("X-Consultant-Id") String consultantId) {
-        return TimesheetResponse.from(timesheetService.submitTimesheet(id, consultantId));
+                                    @RequestHeader("X-Consultant-Id") String consultantId,
+                                    @RequestBody(required = false) SubmitTimesheetRequest request) {
+        return TimesheetResponse.from(timesheetService.submitTimesheet(id, consultantId, request));
+    }
+
+    @PostMapping("/{id}/resubmit")
+    public TimesheetResponse resubmit(@PathVariable UUID id,
+                                      @RequestHeader("X-Consultant-Id") String consultantId,
+                                      @RequestBody(required = false) SubmitTimesheetRequest request) {
+        return TimesheetResponse.from(timesheetService.resubmitTimesheet(id, consultantId, request));
     }
 
     @PostMapping("/{id}/approve")
