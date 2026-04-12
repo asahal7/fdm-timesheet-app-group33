@@ -64,26 +64,36 @@ export default function FinanceView() {
   return (
     <Box>
       <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Filter Approved Timesheets
+        <Typography
+          variant="subtitle2"
+          sx={{
+            color: '#C5FF00',
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            fontSize: '0.7rem',
+            mb: 0.5,
+          }}
+        >
+          Finance View
         </Typography>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          Approved Timesheets
+        </Typography>
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
           <TextField
             label="Consultant ID"
             value={consultantId}
             onChange={(e) => setConsultantId(e.target.value)}
-            sx={{ flex: 1 }}
+            size="small"
+            sx={{ flex: 1, minWidth: 140 }}
           />
           <TextField
             label="Manager ID"
             value={managerId}
             onChange={(e) => setManagerId(e.target.value)}
-            sx={{ flex: 1 }}
+            size="small"
+            sx={{ flex: 1, minWidth: 140 }}
           />
           <TextField
             label="From Date"
@@ -91,7 +101,8 @@ export default function FinanceView() {
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
-            sx={{ flex: 1 }}
+            size="small"
+            sx={{ flex: 1, minWidth: 140 }}
           />
           <TextField
             label="To Date"
@@ -99,23 +110,30 @@ export default function FinanceView() {
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
-            sx={{ flex: 1 }}
+            size="small"
+            sx={{ flex: 1, minWidth: 140 }}
           />
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button variant="contained" onClick={handleSearch}>
             Search
           </Button>
-          <Button variant="outlined" onClick={handleExport}>
+          <Button
+            variant="outlined"
+            onClick={handleExport}
+            sx={{ borderColor: '#C5FF00', color: '#C5FF00' }}
+          >
             Export CSV
           </Button>
         </Box>
       </Paper>
+
       {searched && timesheets.length === 0 && (
-        <Typography color="text.secondary">
-          No approved timesheets found.
-        </Typography>
+        <Box sx={{ p: 4, textAlign: 'center', bgcolor: 'background.paper', borderRadius: 2, border: '1px solid #3A3A3A' }}>
+          <Typography color="text.secondary">No approved timesheets found.</Typography>
+        </Box>
       )}
+
       {timesheets.length > 0 && (
         <Paper>
           <Table>
@@ -125,7 +143,7 @@ export default function FinanceView() {
                 <TableCell>Manager ID</TableCell>
                 <TableCell>Week Start</TableCell>
                 <TableCell>Week End</TableCell>
-                <TableCell>Total Hours</TableCell>
+                <TableCell align="right">Total Hours</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -135,7 +153,9 @@ export default function FinanceView() {
                   <TableCell>{ts.managerId}</TableCell>
                   <TableCell>{ts.weekStart}</TableCell>
                   <TableCell>{ts.weekEnd}</TableCell>
-                  <TableCell>{ts.totalHours}</TableCell>
+                  <TableCell align="right" sx={{ color: '#C5FF00', fontWeight: 700 }}>
+                    {ts.totalHours}h
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

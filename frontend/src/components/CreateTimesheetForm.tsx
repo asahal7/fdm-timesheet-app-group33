@@ -38,9 +38,21 @@ export default function CreateTimesheetForm({ userId, onCreated }: Props) {
   };
 
   return (
-    <Paper sx={{ p: 3, mb: 4 }}>
-      <Typography variant="h6" gutterBottom>
-        Create New Timesheet
+    <Paper sx={{ p: 3, mb: 3 }}>
+      <Typography
+        variant="subtitle2"
+        sx={{
+          color: '#C5FF00',
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          fontSize: '0.7rem',
+          mb: 0.5,
+        }}
+      >
+        New Timesheet
+      </Typography>
+      <Typography variant="h6" sx={{ mb: 2 }}>
+        Create Weekly Timesheet
       </Typography>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
@@ -53,27 +65,27 @@ export default function CreateTimesheetForm({ userId, onCreated }: Props) {
           required
           sx={{ mb: 2 }}
         />
-        <TextField
-          label="Week Start"
-          type="date"
-          value={weekStart}
-          onChange={(e) => setWeekStart(e.target.value)}
-          fullWidth
-          required
-          InputLabelProps={{ shrink: true }}
-          sx={{ mb: 2 }}
-        />
-        <TextField
-          label="Week End"
-          type="date"
-          value={weekEnd}
-          onChange={(e) => setWeekEnd(e.target.value)}
-          fullWidth
-          required
-          InputLabelProps={{ shrink: true }}
-          sx={{ mb: 2 }}
-        />
-        <Button type="submit" variant="contained" fullWidth>
+        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+          <TextField
+            label="Week Start"
+            type="date"
+            value={weekStart}
+            onChange={(e) => setWeekStart(e.target.value)}
+            fullWidth
+            required
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            label="Week End"
+            type="date"
+            value={weekEnd}
+            onChange={(e) => setWeekEnd(e.target.value)}
+            fullWidth
+            required
+            InputLabelProps={{ shrink: true }}
+          />
+        </Box>
+        <Button type="submit" variant="contained" fullWidth size="large">
           Create Timesheet
         </Button>
       </Box>

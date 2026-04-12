@@ -38,25 +38,39 @@ export default function TimesheetList({ timesheets, onSelect }: Props) {
       : timesheets.filter((ts) => ts.status === filter);
 
   return (
-    <Paper sx={{ mb: 4 }}>
+    <Paper>
       <Box
         sx={{
           p: 2,
-          borderBottom: '1px solid #e0e0e0',
+          borderBottom: '1px solid #3A3A3A',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
         }}
       >
-        <Typography variant="h6">All Timesheets</Typography>
+        <Box>
+          <Typography
+            variant="subtitle2"
+            sx={{
+              color: '#C5FF00',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              fontSize: '0.7rem',
+              mb: 0.5,
+            }}
+          >
+            Timesheets
+          </Typography>
+          <Typography variant="h6">
+            {filtered.length} {filter === ALL ? 'Total' : statusLabel[filter as TimesheetStatus]}
+          </Typography>
+        </Box>
         <FormControl size="small" sx={{ minWidth: 180 }}>
           <InputLabel>Filter by status</InputLabel>
           <Select
             value={filter}
             label="Filter by status"
-            onChange={(e) =>
-              setFilter(e.target.value as TimesheetStatus | 'ALL')
-            }
+            onChange={(e) => setFilter(e.target.value as TimesheetStatus | 'ALL')}
           >
             <MenuItem value="ALL">All</MenuItem>
             <MenuItem value="DRAFT">Draft</MenuItem>
@@ -66,10 +80,11 @@ export default function TimesheetList({ timesheets, onSelect }: Props) {
           </Select>
         </FormControl>
       </Box>
+
       {filtered.length === 0 ? (
-        <Typography sx={{ p: 2 }} color="text.secondary">
-          No timesheets found.
-        </Typography>
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          <Typography color="text.secondary">No timesheets found.</Typography>
+        </Box>
       ) : (
         <List disablePadding>
           {filtered.map((ts) => (
@@ -79,16 +94,24 @@ export default function TimesheetList({ timesheets, onSelect }: Props) {
               divider
               secondaryAction={
                 <Chip
-                  label={ts.status}
+                  label={statusLabel[ts.status]}
                   color={statusColor[ts.status]}
                   size="small"
                 />
               }
             >
-              <ListItemButton onClick={() => onSelect(ts.id)}>
+              <ListItemButton onClick={() => onSelect(ts.id)} sx={{ pr: 14 }}>
                 <ListItemText
-                  primary={`Consultant: ${ts.consultantId}`}
-                  secondary={`${ts.weekStart} → ${ts.weekEnd}   |   Manager: ${ts.managerId}`}
+                  primary={
+                    <Typography variant="body2" fontWeight={600}>
+                      {ts.weekStart} → {ts.weekEnd}
+                    </Typography>
+                  }
+                  secondary={
+                    <Typography variant="caption" color="text.secondary">
+                      Consultant: {ts.consultantId} · Manager: {ts.managerId}
+                    </Typography>
+                  }
                 />
               </ListItemButton>
             </ListItem>
