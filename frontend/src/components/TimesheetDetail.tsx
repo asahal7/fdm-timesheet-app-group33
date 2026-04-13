@@ -43,7 +43,6 @@ const statusColor: Record<
 
 export default function TimesheetDetail({ timesheetId, userId, role, onBack }: Props) {
   const [timesheet, setTimesheet] = useState<TimesheetResponse | null>(null);
-  const [managerId, setManagerId] = useState('');
   const [comment, setComment] = useState('');
   const [submitComment, setSubmitComment] = useState('');
   const [error, setError] = useState('');
@@ -92,7 +91,7 @@ export default function TimesheetDetail({ timesheetId, userId, role, onBack }: P
     setError('');
     setSuccess('');
     try {
-      await approveTimesheet(timesheetId, { managerId, comment });
+      await approveTimesheet(timesheetId, { managerId: userId, comment });
       setSuccess('Timesheet approved.');
       load();
     } catch (err: any) {
@@ -104,7 +103,7 @@ export default function TimesheetDetail({ timesheetId, userId, role, onBack }: P
     setError('');
     setSuccess('');
     try {
-      await rejectTimesheet(timesheetId, { managerId, comment });
+      await rejectTimesheet(timesheetId, { managerId: userId, comment });
       setSuccess('Timesheet rejected.');
       load();
     } catch (err: any) {
@@ -273,13 +272,6 @@ export default function TimesheetDetail({ timesheetId, userId, role, onBack }: P
           <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
             Manager Action
           </Typography>
-          <TextField
-            label="Your Manager ID"
-            value={managerId}
-            onChange={(e) => setManagerId(e.target.value)}
-            fullWidth
-            sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-          />
           <TextField
             label="Comment (required for rejection)"
             value={comment}

@@ -35,14 +35,14 @@ export const addEntry = (id: string, data: AddEntryRequest) =>
 export const submitTimesheet = (id: string, consultantId: string, comment?: string) =>
   api.post<TimesheetResponse>(
     `/timesheets/${id}/submit`,
-    comment ? { comment } : null,
+    comment ? { comment } : {},
     { headers: { 'X-Consultant-Id': consultantId } },
   );
 
 export const resubmitTimesheet = (id: string, consultantId: string, comment?: string) =>
   api.post<TimesheetResponse>(
     `/timesheets/${id}/resubmit`,
-    comment ? { comment } : null,
+    comment ? { comment } : {},
     { headers: { 'X-Consultant-Id': consultantId } },
   );
 
