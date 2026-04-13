@@ -27,6 +27,13 @@ const statusColor: Record<TimesheetStatus, 'default' | 'warning' | 'success' | '
   REJECTED: 'error',
 };
 
+const statusLabel: Record<TimesheetStatus, string> = {
+  DRAFT: 'Draft',
+  PENDING_APPROVAL: 'Pending Approval',
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected',
+};
+
 const ALL = 'ALL';
 
 export default function TimesheetList({ timesheets, onSelect }: Props) {
@@ -37,15 +44,25 @@ export default function TimesheetList({ timesheets, onSelect }: Props) {
       ? timesheets
       : timesheets.filter((ts) => ts.status === filter);
 
-  return (
-    <Paper>
+   return (
+    <Paper
+      elevation={0}
+      sx={{
+        bgcolor: 'transparent',
+        borderRadius: 3,
+        overflow: 'hidden',
+      }}
+    >
       <Box
         sx={{
           p: 2,
-          borderBottom: '1px solid #3A3A3A',
+          mb: 2,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 2,
+          borderBottom: '2px solid rgba(197,255,0,0.2)',
         }}
       >
         <Box>
@@ -54,14 +71,15 @@ export default function TimesheetList({ timesheets, onSelect }: Props) {
             sx={{
               color: '#C5FF00',
               textTransform: 'uppercase',
-              letterSpacing: '0.08em',
+              letterSpacing: '0.1em',
               fontSize: '0.7rem',
+              fontWeight: 600,
               mb: 0.5,
             }}
           >
             Timesheets
           </Typography>
-          <Typography variant="h6">
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
             {filtered.length} {filter === ALL ? 'Total' : statusLabel[filter as TimesheetStatus]}
           </Typography>
         </Box>
@@ -71,6 +89,7 @@ export default function TimesheetList({ timesheets, onSelect }: Props) {
             value={filter}
             label="Filter by status"
             onChange={(e) => setFilter(e.target.value as TimesheetStatus | 'ALL')}
+            sx={{ borderRadius: 2 }}
           >
             <MenuItem value="ALL">All</MenuItem>
             <MenuItem value="DRAFT">Draft</MenuItem>
@@ -82,34 +101,46 @@ export default function TimesheetList({ timesheets, onSelect }: Props) {
       </Box>
 
       {filtered.length === 0 ? (
-        <Box sx={{ p: 4, textAlign: 'center' }}>
-          <Typography color="text.secondary">No timesheets found.</Typography>
+        <Box sx={{ p: 6, textAlign: 'center', bgcolor: 'background.paper', borderRadius: 3 }}>
+          <Typography color="text.secondary" variant="body1">
+            No timesheets found.
+          </Typography>
         </Box>
       ) : (
-        <List disablePadding>
+        <List disablePadding sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {filtered.map((ts) => (
             <ListItem
               key={ts.id}
               disablePadding
-              divider
-              secondaryAction={
-                <Chip
-                  label={statusLabel[ts.status]}
-                  color={statusColor[ts.status]}
-                  size="small"
-                />
-              }
+              sx={{
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                transition: 'all 0.2s',
+                '&:hover': {
+                  transform: 'translateX(4px)',
+                  bgcolor: 'rgba(197,255,0,0.04)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                },
+              }}
             >
-              <ListItemButton onClick={() => onSelect(ts.id)} sx={{ pr: 14 }}>
+              <ListItemButton onClick={() => onSelect(ts.id)} sx={{ borderRadius: 2, p: 2 }}>
                 <ListItemText
                   primary={
-                    <Typography variant="body2" fontWeight={600}>
-                      {ts.weekStart} → {ts.weekEnd}
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+                      <Typography variant="body1" fontWeight={700} sx={{ letterSpacing: '-0.01em' }}>
+                        {ts.weekStart} → {ts.weekEnd}
+                      </Typography>
+                      <Chip
+                        label={statusLabel[ts.status]}
+                        color={statusColor[ts.status]}
+                        size="small"
+                        sx={{ fontWeight: 600, textTransform: 'uppercase', fontSize: '0.7rem' }}
+                      />
+                    </Box>
                   }
                   secondary={
-                    <Typography variant="caption" color="text.secondary">
-                      Consultant: {ts.consultantId} · Manager: {ts.managerId}
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                      Consultant: {ts.consultantId} &nbsp;|&nbsp; Manager: {ts.managerId}
                     </Typography>
                   }
                 />

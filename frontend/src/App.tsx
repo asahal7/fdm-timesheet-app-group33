@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react'
+// App.tsx – replace entire file content
+import { useEffect, useState } from 'react';
 import {
   AppBar,
   Box,
   Button,
-  ButtonGroup,
   Container,
   TextField,
   Toolbar,
   Typography,
+  Paper,
+  Grid,
 } from '@mui/material';
 import { getAllTimesheets, setUserRole } from './api/timesheetApi';
 import type { TimesheetResponse, UserRole } from './types/types';
@@ -34,7 +36,7 @@ export default function App() {
     }
   };
 
- useEffect(() => {
+  useEffect(() => {
     if (role) {
       setUserRole(role);
       if (role !== 'FINANCE') {
@@ -45,7 +47,7 @@ export default function App() {
 
   const handleConfirmRole = () => {
     if (!userId.trim()) {
-      setUserIdError('Please enter your ID to continue.');
+      setUserIdError('Please enter your employee ID to continue.');
       return;
     }
     setUserIdError('');
@@ -60,8 +62,13 @@ export default function App() {
     setTimesheets([]);
   };
 
-
   if (!role) {
+    const roleCards: { role: UserRole; title: string; description: string}[] = [
+      { role: 'CONSULTANT', title: 'Consultant', description: 'Submit and manage your weekly timesheets'},
+      { role: 'MANAGER', title: 'Line Manager', description: 'Review and approve teams timesheets'},
+      { role: 'FINANCE', title: 'Finance Team', description: 'See all submitted timesheets'},
+    ];
+
     return (
       <Box
         sx={{
@@ -72,9 +79,20 @@ export default function App() {
           alignItems: 'center',
           justifyContent: 'center',
           p: 3,
+          position: 'relative',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'radial-gradient(circle at 20% 30%, rgba(197,255,0,0.08) 0%, rgba(0,0,0,0) 70%)',
+            pointerEvents: 'none',
+          },
         }}
       >
-        <Box sx={{ mb: 4, textAlign: 'center' }}>
+        <Box sx={{ mb: 5, textAlign: 'center', zIndex: 1 }}>
           <Box
             sx={{
               display: 'inline-flex',
@@ -85,13 +103,14 @@ export default function App() {
               px: 3,
               py: 1.5,
               mb: 3,
+              boxShadow: '0 8px 20px rgba(197,255,0,0.2)',
             }}
           >
             <FdmLogo height={40} variant="dark" />
           </Box>
           <Typography
             variant="h4"
-            sx={{ color: 'text.primary', mb: 1 }}
+            sx={{ color: 'text.primary', mb: 1, fontWeight: 600 }}
           >
             Timesheet Portal
           </Typography>
@@ -103,41 +122,56 @@ export default function App() {
         <Box
           sx={{
             width: '100%',
-            maxWidth: 400,
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            border: '1px solid #3A3A3A',
-            p: 3,
+            maxWidth: 900,
+            mx: 'auto',
+            zIndex: 1,
           }}
         >
-          <Typography
-            variant="subtitle2"
-            color="text.secondary"
-            sx={{ mb: 1.5, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.7rem' }}
-          >
-            I am a
-          </Typography>
-          <ButtonGroup orientation="vertical" fullWidth sx={{ mb: 3 }}>
-            {(['CONSULTANT', 'MANAGER', 'FINANCE'] as UserRole[]).map((r) => (
-              <Button
-                key={r}
-                variant={pendingRole === r ? 'contained' : 'outlined'}
-                size="large"
-                onClick={() => setPendingRole(r)}
-                sx={{
-                  justifyContent: 'flex-start',
-                  px: 2.5,
-                  borderColor: pendingRole === r ? '#C5FF00' : '#3A3A3A',
-                  color: pendingRole === r ? '#1E1E1E' : 'text.primary',
-                }}
-              >
-                {r === 'CONSULTANT' ? 'Consultant' : r === 'MANAGER' ? 'Line Manager' : 'Finance Team'}
-              </Button>
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            {roleCards.map((card) => (
+              <Grid size={{ xs: 12, sm: 4 }} key={card.role}>
+                <Paper
+                  elevation={0}
+                  onClick={() => setPendingRole(card.role)}
+                  sx={{
+                    p: 3,
+                    height: '100%',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease-in-out',
+                    bgcolor: pendingRole === card.role ? 'rgba(197,255,0,0.08)' : 'background.paper',
+                    border: pendingRole === card.role ? '1px solid #C5FF00' : '1px solid #3A3A3A',
+                    borderRadius: 3,
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      borderColor: '#C5FF00',
+                      bgcolor: 'rgba(197,255,0,0.04)',
+                      boxShadow: '0 12px 24px rgba(0,0,0,0.3)',
+                    },
+                  }}
+                >
+                  <Typography variant="h2" sx={{ fontSize: '2.5rem', mb: 1 }}>
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, color: pendingRole === card.role ? '#C5FF00' : 'text.primary' }}>
+                    {card.title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {card.description}
+                  </Typography>
+                </Paper>
+              </Grid>
             ))}
-          </ButtonGroup>
+          </Grid>
 
           {pendingRole && (
-            <Box>
+            <Paper
+              sx={{
+                p: 3,
+                bgcolor: 'background.paper',
+                borderRadius: 3,
+                border: '1px solid #3A3A3A',
+                transition: 'all 0.2s',
+              }}
+            >
               <TextField
                 label="Employee ID"
                 value={userId}
@@ -148,17 +182,25 @@ export default function App() {
                 helperText={userIdError}
                 sx={{ mb: 2 }}
                 autoFocus
+                InputProps={{
+                  sx: { borderRadius: 2 },
+                }}
               />
               <Button
                 variant="contained"
                 fullWidth
                 size="large"
                 onClick={handleConfirmRole}
-                sx={{ fontWeight: 700 }}
+                sx={{
+                  fontWeight: 700,
+                  bgcolor: '#C5FF00',
+                  color: '#1E1E1E',
+                  '&:hover': { bgcolor: '#b0e000' },
+                }}
               >
                 Continue
               </Button>
-            </Box>
+            </Paper>
           )}
         </Box>
       </Box>
@@ -178,6 +220,7 @@ export default function App() {
         sx={{
           bgcolor: '#1E1E1E',
           borderBottom: '1px solid #3A3A3A',
+          backdropFilter: 'blur(8px)',
         }}
       >
         <Toolbar sx={{ justifyContent: 'space-between' }}>
@@ -215,7 +258,7 @@ export default function App() {
               variant="outlined"
               size="small"
               onClick={handleSwitchRole}
-              sx={{ borderColor: '#3A3A3A', color: 'text.secondary' }}
+              sx={{ borderColor: '#3A3A3A', color: 'text.secondary', '&:hover': { borderColor: '#C5FF00', color: '#C5FF00' } }}
             >
               Switch Role
             </Button>

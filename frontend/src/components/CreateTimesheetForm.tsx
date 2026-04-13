@@ -37,25 +37,39 @@ export default function CreateTimesheetForm({ userId, onCreated }: Props) {
     }
   };
 
-  return (
-    <Paper sx={{ p: 3, mb: 3 }}>
+   return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: 3,
+        mb: 4,
+        borderRadius: 3,
+        border: '1px solid #3A3A3A',
+        bgcolor: 'background.paper',
+        transition: 'all 0.2s',
+        '&:hover': { borderColor: '#C5FF00', boxShadow: '0 8px 20px rgba(0,0,0,0.3)' },
+      }}
+    >
       <Typography
         variant="subtitle2"
         sx={{
           color: '#C5FF00',
           textTransform: 'uppercase',
-          letterSpacing: '0.08em',
+          letterSpacing: '0.1em',
           fontSize: '0.7rem',
+          fontWeight: 600,
           mb: 0.5,
         }}
       >
         New Timesheet
       </Typography>
-      <Typography variant="h6" sx={{ mb: 2 }}>
+      <Typography variant="h6" sx={{ mb: 2, fontWeight: 700 }}>
         Create Weekly Timesheet
       </Typography>
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+
+      {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>}
+      {success && <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>{success}</Alert>}
+
       <Box component="form" onSubmit={handleSubmit}>
         <TextField
           label="Manager ID"
@@ -63,9 +77,9 @@ export default function CreateTimesheetForm({ userId, onCreated }: Props) {
           onChange={(e) => setManagerId(e.target.value)}
           fullWidth
           required
-          sx={{ mb: 2 }}
+          sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
         />
-        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+        <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
           <TextField
             label="Week Start"
             type="date"
@@ -74,6 +88,7 @@ export default function CreateTimesheetForm({ userId, onCreated }: Props) {
             fullWidth
             required
             InputLabelProps={{ shrink: true }}
+            sx={{ flex: 1, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
           />
           <TextField
             label="Week End"
@@ -83,9 +98,22 @@ export default function CreateTimesheetForm({ userId, onCreated }: Props) {
             fullWidth
             required
             InputLabelProps={{ shrink: true }}
+            sx={{ flex: 1, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
           />
         </Box>
-        <Button type="submit" variant="contained" fullWidth size="large">
+        <Button
+          type="submit"
+          variant="contained"
+          fullWidth
+          size="large"
+          sx={{
+            fontWeight: 700,
+            bgcolor: '#C5FF00',
+            color: '#1E1E1E',
+            borderRadius: 2,
+            '&:hover': { bgcolor: '#b0e000', transform: 'translateY(-1px)' },
+          }}
+        >
           Create Timesheet
         </Button>
       </Box>
