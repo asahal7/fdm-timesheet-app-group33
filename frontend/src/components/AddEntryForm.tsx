@@ -39,6 +39,10 @@ export default function AddEntryForm({ timesheetId, consultantId, onEntryAdded }
     e.preventDefault();
     setError('');
     setSuccess('');
+    if (!hours || parseFloat(hours) <= 0) {
+      setError('Hours must be greater than 0.');
+      return;
+    }
     try {
       await addEntry(timesheetId, { day: day as DayOfWeek, hours: parseFloat(hours) }, consultantId);
       setSuccess(`Entry added for ${day}.`);
@@ -79,7 +83,7 @@ export default function AddEntryForm({ timesheetId, consultantId, onEntryAdded }
         <TextField
           label="Hours"
           type="number"
-          inputProps={{ min: 0, max: 24, step: 0.5 }}
+          inputProps={{ min: 0.5, max: 24, step: 0.5 }}
           value={hours}
           onChange={(e) => setHours(e.target.value)}
           required

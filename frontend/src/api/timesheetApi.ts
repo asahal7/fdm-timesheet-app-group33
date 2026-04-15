@@ -23,8 +23,10 @@ export const createTimesheet = (data: CreateTimesheetRequest, consultantId: stri
     },
   });
 
-export const getAllTimesheets = () =>
-  api.get<TimesheetResponse[]>('/timesheets');
+export const getAllTimesheets = (userId: string) =>
+  api.get<TimesheetResponse[]>('/timesheets', {
+    headers: { 'X-User-Id': userId },
+  });
 
 export const getTimesheetById = (id: string) =>
   api.get<TimesheetResponse>(`/timesheets/${id}`);

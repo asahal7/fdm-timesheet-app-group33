@@ -61,6 +61,9 @@ public class TimesheetService {
         if (request.getWeekStart() == null || request.getWeekEnd() == null) {
             throw new BadRequestException("weekStart and weekEnd are required.");
         }
+        if (timesheetRepository.findByConsultantIdAndWeekStart(request.getConsultantId(), request.getWeekStart()).isPresent()) {
+            throw new BadRequestException("A timesheet for this week already exists.");
+        }
 
         Timesheet timesheet = new Timesheet(
                 request.getConsultantId(),
@@ -79,8 +82,16 @@ public class TimesheetService {
     }
 
     @Transactional(readOnly = true)
-    public List<Timesheet> getAllTimesheets() {
-        return timesheetRepository.findAll().stream()
+    public List<Timesheet> getAllTimesheets(UserRole role, String userId) {
+        List<Timesheet> timesheets;
+        if (role == UserRole.CONSULTANT) {
+            timesheets = timesheetRepository.findByConsultantId(userId);
+        } else if (role == UserRole.MANAGER) {
+            timesheets = timesheetRepository.findByManagerId(userId);
+        } else {
+            timesheets = timesheetRepository.findAll();
+        }
+        return timesheets.stream()
                 .sorted(java.util.Comparator.comparing(Timesheet::getWeekStart).reversed())
                 .toList();
     }

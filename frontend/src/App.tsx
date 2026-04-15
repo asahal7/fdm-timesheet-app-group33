@@ -29,7 +29,7 @@ export default function App() {
 
   const loadTimesheets = async () => {
     try {
-      const res = await getAllTimesheets();
+      const res = await getAllTimesheets(userId);
       setTimesheets(res.data);
     } catch {
       setTimesheets([]);

@@ -4,6 +4,11 @@ import {
   Box,
   Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
   Paper,
   Table,
@@ -48,6 +53,7 @@ export default function TimesheetDetail({ timesheetId, userId, role, onBack }: P
   const [submitComment, setSubmitComment] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [pendingAction, setPendingAction] = useState<'approve' | 'reject' | null>(null);
 
   const load = async () => {
     try {
@@ -220,9 +226,16 @@ export default function TimesheetDetail({ timesheetId, userId, role, onBack }: P
 
       <Divider sx={{ my: 2, borderColor: '#3A3A3A' }} />
 
-      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-        Daily Entries
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          Daily Entries
+        </Typography>
+        {timesheet.entries.length > 0 && (
+          <Typography variant="body2" sx={{ color: '#C5FF00', fontWeight: 700 }}>
+            Total: {timesheet.entries.reduce((sum, e) => sum + Number(e.hours), 0).toFixed(1)} hrs
+          </Typography>
+        )}
+      </Box>
       {timesheet.entries.length === 0 ? (
         <Typography color="text.secondary" sx={{ p: 2, bgcolor: 'rgba(0,0,0,0.2)', borderRadius: 2, textAlign: 'center' }}>
           No entries yet.
@@ -312,7 +325,7 @@ export default function TimesheetDetail({ timesheetId, userId, role, onBack }: P
             <Button
               variant="contained"
               color="success"
-              onClick={handleApprove}
+              onClick={() => setPendingAction('approve')}
               sx={{ borderRadius: 2, fontWeight: 600 }}
             >
               Approve
@@ -320,7 +333,7 @@ export default function TimesheetDetail({ timesheetId, userId, role, onBack }: P
             <Button
               variant="contained"
               color="error"
-              onClick={handleReject}
+              onClick={() => setPendingAction('reject')}
               sx={{ borderRadius: 2, fontWeight: 600 }}
             >
               Reject
@@ -328,6 +341,40 @@ export default function TimesheetDetail({ timesheetId, userId, role, onBack }: P
           </Box>
         </Box>
       )}
+
+      <Dialog
+        open={pendingAction !== null}
+        onClose={() => setPendingAction(null)}
+        PaperProps={{ sx: { bgcolor: '#2A2A2A', borderRadius: 3, border: '1px solid #3A3A3A' } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          {pendingAction === 'approve' ? 'Confirm Approval' : 'Confirm Rejection'}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: 'text.secondary' }}>
+            {pendingAction === 'approve'
+              ? 'Are you sure you want to approve this timesheet? This cannot be undone.'
+              : 'Are you sure you want to reject this timesheet?'}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button onClick={() => setPendingAction(null)} sx={{ borderRadius: 2 }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color={pendingAction === 'approve' ? 'success' : 'error'}
+            onClick={() => {
+              if (pendingAction === 'approve') handleApprove();
+              else handleReject();
+              setPendingAction(null);
+            }}
+            sx={{ borderRadius: 2, fontWeight: 600 }}
+          >
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Paper>
   );
 }

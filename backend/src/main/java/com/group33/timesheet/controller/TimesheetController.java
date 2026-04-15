@@ -46,8 +46,10 @@ public class TimesheetController {
     }
 
     @GetMapping
-    public List<TimesheetResponse> getAllTimesheets() {
-        return timesheetService.getAllTimesheets()
+    public List<TimesheetResponse> getAllTimesheets(
+            @RequestHeader("X-User-Role") UserRole userRole,
+            @RequestHeader("X-User-Id") String userId) {
+        return timesheetService.getAllTimesheets(userRole, userId)
                 .stream()
                 .map(TimesheetResponse::from)
                 .toList();
