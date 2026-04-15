@@ -196,7 +196,7 @@ export default function TimesheetDetail({ timesheetId, userId, role, onBack }: P
         )}
         {timesheet.consultantComment && (
           <Typography variant="body2" sx={{ gridColumn: '1/-1' }}>
-            <strong>Your comment:</strong> {timesheet.consultantComment}
+            <strong>Consultant's comment:</strong> {timesheet.consultantComment}
           </Typography>
         )}
       </Box>

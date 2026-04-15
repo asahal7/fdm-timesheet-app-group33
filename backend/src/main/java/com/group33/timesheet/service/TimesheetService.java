@@ -61,8 +61,8 @@ public class TimesheetService {
         if (request.getWeekStart() == null || request.getWeekEnd() == null) {
             throw new BadRequestException("weekStart and weekEnd are required.");
         }
-        if (timesheetRepository.findByConsultantIdAndWeekStart(request.getConsultantId(), request.getWeekStart()).isPresent()) {
-            throw new BadRequestException("A timesheet for this week already exists.");
+        if (!timesheetRepository.findOverlappingTimesheets(request.getConsultantId(), request.getWeekStart(), request.getWeekEnd()).isEmpty()) {
+            throw new BadRequestException("A timesheet already exists that overlaps with this period.");
         }
 
         Timesheet timesheet = new Timesheet(
