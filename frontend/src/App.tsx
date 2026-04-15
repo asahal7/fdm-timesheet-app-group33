@@ -260,7 +260,7 @@ export default function App() {
               onClick={handleSwitchRole}
               sx={{ borderColor: '#3A3A3A', color: 'text.secondary', '&:hover': { borderColor: '#C5FF00', color: '#C5FF00' } }}
             >
-              Switch Role
+              Logout
             </Button>
           </Box>
         </Toolbar>
