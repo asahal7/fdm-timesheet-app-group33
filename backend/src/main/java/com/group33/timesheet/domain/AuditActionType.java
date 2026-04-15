@@ -6,5 +6,6 @@ public enum AuditActionType {
     SUBMITTED,
     APPROVED,
     REJECTED,
-    RESUBMITTED
+    RESUBMITTED,
+    ENTRY_REMOVED
 }

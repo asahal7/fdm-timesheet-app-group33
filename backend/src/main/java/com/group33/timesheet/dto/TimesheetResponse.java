@@ -92,14 +92,20 @@ public class TimesheetResponse {
     }
 
     public static class EntryResponse {
+        private UUID id;
         private DayOfWeek day;
         private BigDecimal hours;
 
         public static EntryResponse from(TimesheetEntry entry) {
             EntryResponse response = new EntryResponse();
+            response.id = entry.getId();
             response.day = entry.getDay();
             response.hours = entry.getHours();
             return response;
+        }
+
+        public UUID getId() {
+            return id;
         }
 
         public DayOfWeek getDay() {

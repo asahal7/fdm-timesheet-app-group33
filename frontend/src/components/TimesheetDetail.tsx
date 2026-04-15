@@ -18,6 +18,7 @@ import {
   approveTimesheet,
   getTimesheetById,
   rejectTimesheet,
+  removeEntry,
   resubmitTimesheet,
   submitTimesheet,
 } from '../api/timesheetApi';
@@ -96,6 +97,17 @@ export default function TimesheetDetail({ timesheetId, userId, role, onBack }: P
       load();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Approve failed.');
+    }
+  };
+
+  const handleRemoveEntry = async (entryId: string) => {
+    setError('');
+    setSuccess('');
+    try {
+      await removeEntry(timesheetId, entryId);
+      load();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to remove entry.');
     }
   };
 
@@ -221,13 +233,28 @@ export default function TimesheetDetail({ timesheetId, userId, role, onBack }: P
             <TableRow sx={{ '& th': { fontWeight: 600, borderBottom: '1px solid #3A3A3A' } }}>
               <TableCell>Day</TableCell>
               <TableCell>Hours</TableCell>
+              {role === 'CONSULTANT' && (timesheet.status === 'DRAFT' || timesheet.status === 'REJECTED') && !timesheet.locked && (
+                <TableCell />
+              )}
             </TableRow>
           </TableHead>
           <TableBody>
-            {timesheet.entries.map((entry, i) => (
-              <TableRow key={i} sx={{ '& td': { borderBottom: '1px solid #3A3A3A' } }}>
+            {timesheet.entries.map((entry) => (
+              <TableRow key={entry.id} sx={{ '& td': { borderBottom: '1px solid #3A3A3A' } }}>
                 <TableCell>{entry.day}</TableCell>
                 <TableCell>{entry.hours}</TableCell>
+                {role === 'CONSULTANT' && (timesheet.status === 'DRAFT' || timesheet.status === 'REJECTED') && !timesheet.locked && (
+                  <TableCell align="right">
+                    <Button
+                      size="small"
+                      color="error"
+                      onClick={() => handleRemoveEntry(entry.id)}
+                      sx={{ minWidth: 0, px: 1 }}
+                    >
+                      Remove
+                    </Button>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>

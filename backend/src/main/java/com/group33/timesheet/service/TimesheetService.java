@@ -25,6 +25,7 @@ import com.group33.timesheet.exception.BadRequestException;
 import com.group33.timesheet.exception.ResourceNotFoundException;
 import com.group33.timesheet.repository.ApprovalDecisionRepository;
 import com.group33.timesheet.repository.AuditLogEntryRepository;
+import com.group33.timesheet.repository.TimesheetEntryRepository;
 import com.group33.timesheet.repository.TimesheetRepository;
 
 @Service
@@ -34,13 +35,16 @@ public class TimesheetService {
     private final TimesheetRepository timesheetRepository;
     private final ApprovalDecisionRepository approvalDecisionRepository;
     private final AuditLogEntryRepository auditLogEntryRepository;
+    private final TimesheetEntryRepository timesheetEntryRepository;
 
     public TimesheetService(TimesheetRepository timesheetRepository,
                             ApprovalDecisionRepository approvalDecisionRepository,
-                            AuditLogEntryRepository auditLogEntryRepository) {
+                            AuditLogEntryRepository auditLogEntryRepository,
+                            TimesheetEntryRepository timesheetEntryRepository) {
         this.timesheetRepository = timesheetRepository;
         this.approvalDecisionRepository = approvalDecisionRepository;
         this.auditLogEntryRepository = auditLogEntryRepository;
+        this.timesheetEntryRepository = timesheetEntryRepository;
     }
 
     public Timesheet createTimesheet(CreateTimesheetRequest request, String callerConsultantId) {
@@ -113,6 +117,37 @@ public class TimesheetService {
                         AuditActionType.ENTRY_ADDED,
                         timesheet.getConsultantId(),
                         "Entry added for " + request.getDay() + " with " + request.getHours() + " hours.",
+                        timesheet
+                )
+        );
+
+        return timesheetRepository.save(timesheet);
+    }
+
+    public Timesheet removeEntry(UUID timesheetId, UUID entryId, UserRole callerRole) {
+        requireConsultantRole(callerRole);
+
+        Timesheet timesheet = getTimesheetById(timesheetId);
+
+        if (timesheet.getStatus() != TimesheetStatus.DRAFT && timesheet.getStatus() != TimesheetStatus.REJECTED) {
+            throw new BadRequestException("Entries can only be removed while the timesheet is in DRAFT or REJECTED status.");
+        }
+
+        TimesheetEntry entry = timesheetEntryRepository.findById(entryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Entry not found: " + entryId));
+
+        if (!entry.getTimesheet().getId().equals(timesheetId)) {
+            throw new BadRequestException("Entry does not belong to this timesheet.");
+        }
+
+        timesheet.getEntries().remove(entry);
+        timesheetEntryRepository.delete(entry);
+
+        auditLogEntryRepository.save(
+                new AuditLogEntry(
+                        AuditActionType.ENTRY_REMOVED,
+                        timesheet.getConsultantId(),
+                        "Entry removed for " + entry.getDay() + ".",
                         timesheet
                 )
         );

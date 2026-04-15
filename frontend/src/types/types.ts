@@ -12,6 +12,7 @@ export type DayOfWeek =
   | 'SUNDAY';
 
 export interface EntryResponse {
+  id: string;
   day: DayOfWeek;
   hours: number;
 }
