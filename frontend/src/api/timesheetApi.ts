@@ -29,11 +29,15 @@ export const getAllTimesheets = () =>
 export const getTimesheetById = (id: string) =>
   api.get<TimesheetResponse>(`/timesheets/${id}`);
 
-export const addEntry = (id: string, data: AddEntryRequest) =>
-  api.post<TimesheetResponse>(`/timesheets/${id}/entries`, data);
+export const addEntry = (id: string, data: AddEntryRequest, consultantId: string) =>
+  api.post<TimesheetResponse>(`/timesheets/${id}/entries`, data, {
+    headers: { 'X-Consultant-Id': consultantId },
+  });
 
-export const removeEntry = (timesheetId: string, entryId: string) =>
-  api.delete<TimesheetResponse>(`/timesheets/${timesheetId}/entries/${entryId}`);
+export const removeEntry = (timesheetId: string, entryId: string, consultantId: string) =>
+  api.delete<TimesheetResponse>(`/timesheets/${timesheetId}/entries/${entryId}`, {
+    headers: { 'X-Consultant-Id': consultantId },
+  });
 
 export const submitTimesheet = (id: string, consultantId: string, comment?: string) =>
   api.post<TimesheetResponse>(

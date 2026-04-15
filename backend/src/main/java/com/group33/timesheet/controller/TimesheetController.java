@@ -61,15 +61,17 @@ public class TimesheetController {
     @PostMapping("/{id}/entries")
     public TimesheetResponse addEntry(@PathVariable UUID id,
                                       @RequestHeader("X-User-Role") UserRole userRole,
+                                      @RequestHeader("X-Consultant-Id") String consultantId,
                                       @RequestBody AddTimesheetEntryRequest request) {
-        return TimesheetResponse.from(timesheetService.addEntry(id, request, userRole));
+        return TimesheetResponse.from(timesheetService.addEntry(id, request, userRole, consultantId));
     }
 
     @DeleteMapping("/{id}/entries/{entryId}")
     public TimesheetResponse removeEntry(@PathVariable UUID id,
                                          @PathVariable UUID entryId,
-                                         @RequestHeader("X-User-Role") UserRole userRole) {
-        return TimesheetResponse.from(timesheetService.removeEntry(id, entryId, userRole));
+                                         @RequestHeader("X-User-Role") UserRole userRole,
+                                         @RequestHeader("X-Consultant-Id") String consultantId) {
+        return TimesheetResponse.from(timesheetService.removeEntry(id, entryId, userRole, consultantId));
     }
 
     @PostMapping("/{id}/submit")

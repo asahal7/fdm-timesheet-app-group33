@@ -43,6 +43,7 @@ public class TimesheetResponse {
         response.entries = timesheet.getEntries()
                 .stream()
                 .map(EntryResponse::from)
+                .sorted(java.util.Comparator.comparingInt(e -> e.getDay().getValue()))
                 .toList();
         return response;
     }

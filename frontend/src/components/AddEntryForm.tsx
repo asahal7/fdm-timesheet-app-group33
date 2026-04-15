@@ -15,6 +15,7 @@ import type { DayOfWeek } from '../types/types';
 
 interface Props {
   timesheetId: string;
+  consultantId: string;
   onEntryAdded: () => void;
 }
 
@@ -28,7 +29,7 @@ const DAYS: DayOfWeek[] = [
   'SUNDAY',
 ];
 
-export default function AddEntryForm({ timesheetId, onEntryAdded }: Props) {
+export default function AddEntryForm({ timesheetId, consultantId, onEntryAdded }: Props) {
   const [day, setDay] = useState<DayOfWeek | ''>('');
   const [hours, setHours] = useState('');
   const [error, setError] = useState('');
@@ -39,7 +40,7 @@ export default function AddEntryForm({ timesheetId, onEntryAdded }: Props) {
     setError('');
     setSuccess('');
     try {
-      await addEntry(timesheetId, { day: day as DayOfWeek, hours: parseFloat(hours) });
+      await addEntry(timesheetId, { day: day as DayOfWeek, hours: parseFloat(hours) }, consultantId);
       setSuccess(`Entry added for ${day}.`);
       setDay('');
       setHours('');

@@ -104,7 +104,7 @@ export default function TimesheetDetail({ timesheetId, userId, role, onBack }: P
     setError('');
     setSuccess('');
     try {
-      await removeEntry(timesheetId, entryId);
+      await removeEntry(timesheetId, entryId, userId);
       load();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to remove entry.');
@@ -262,7 +262,7 @@ export default function TimesheetDetail({ timesheetId, userId, role, onBack }: P
       )}
 
       {role === 'CONSULTANT' && (timesheet.status === 'DRAFT' || timesheet.status === 'REJECTED') && !timesheet.locked && (
-        <AddEntryForm timesheetId={timesheetId} onEntryAdded={load} />
+        <AddEntryForm timesheetId={timesheetId} consultantId={userId} onEntryAdded={load} />
       )}
 
       <Divider sx={{ my: 2, borderColor: '#3A3A3A' }} />

@@ -80,7 +80,9 @@ public class TimesheetService {
 
     @Transactional(readOnly = true)
     public List<Timesheet> getAllTimesheets() {
-        return timesheetRepository.findAll();
+        return timesheetRepository.findAll().stream()
+                .sorted(java.util.Comparator.comparing(Timesheet::getWeekStart).reversed())
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -89,10 +91,21 @@ public class TimesheetService {
                 .orElseThrow(() -> new ResourceNotFoundException("Timesheet not found: " + id));
     }
 
-    public Timesheet addEntry(UUID timesheetId, AddTimesheetEntryRequest request, UserRole callerRole) {
+    public Timesheet addEntry(UUID timesheetId, AddTimesheetEntryRequest request, UserRole callerRole, String callerConsultantId) {
         requireConsultantRole(callerRole);
 
+        if (request.getDay() == null) {
+            throw new BadRequestException("Day is required.");
+        }
+        if (request.getHours() == null) {
+            throw new BadRequestException("Hours is required.");
+        }
+
         Timesheet timesheet = getTimesheetById(timesheetId);
+
+        if (!timesheet.getConsultantId().equals(callerConsultantId)) {
+            throw new BadRequestException("You can only add entries to your own timesheets.");
+        }
 
         if (timesheet.getStatus() != TimesheetStatus.DRAFT && timesheet.getStatus() != TimesheetStatus.REJECTED) {
             throw new BadRequestException("Entries can only be added while the timesheet is in DRAFT or REJECTED status.");
@@ -124,10 +137,14 @@ public class TimesheetService {
         return timesheetRepository.save(timesheet);
     }
 
-    public Timesheet removeEntry(UUID timesheetId, UUID entryId, UserRole callerRole) {
+    public Timesheet removeEntry(UUID timesheetId, UUID entryId, UserRole callerRole, String callerConsultantId) {
         requireConsultantRole(callerRole);
 
         Timesheet timesheet = getTimesheetById(timesheetId);
+
+        if (!timesheet.getConsultantId().equals(callerConsultantId)) {
+            throw new BadRequestException("You can only remove entries from your own timesheets.");
+        }
 
         if (timesheet.getStatus() != TimesheetStatus.DRAFT && timesheet.getStatus() != TimesheetStatus.REJECTED) {
             throw new BadRequestException("Entries can only be removed while the timesheet is in DRAFT or REJECTED status.");
